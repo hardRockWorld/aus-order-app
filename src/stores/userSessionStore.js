@@ -18,6 +18,7 @@ export const useSessionStore = defineStore('session', {
       this.currentUser.loginTime = loginTime;
       this.currentUser.isLoading = true;
     },
+
     removeUser() {
       this.currentUser.fbUser = null;
       this.currentUser.email = '';
@@ -25,12 +26,19 @@ export const useSessionStore = defineStore('session', {
       this.currentUser.loginTime = null;
       this.currentUser.isLoading = false;
     },
+
     getUser() {
       return this.currentUser;
     },
+
+    getUserLoggedIn() {
+      return this.currentUser.isLoggedIn;
+    },
+
     getIsLoading() {
       return this.currentUser.isLoading;
     },
+
     setIsLoading(isLoading) {
       this.currentUser.isLoading = isLoading;
     }

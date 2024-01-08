@@ -1,10 +1,14 @@
 <script setup>
 import { products } from '@/util/constants';
 import OrderItemRow from '../components/OrderItemRow.vue';
-import {ref, computed} from 'vue';
-import { collection, addDoc, getCountFromServer } from "firebase/firestore";
+import {ref, computed } from 'vue';
+import { addNewOrder, fetchSingleDocRef } from "@/dbQueries";
 import { db } from '@/fb';
-import { useSessionStore } from '@/stores/userSessionStore';
+import { useSessionStore } from "@/stores/userSessionStore";
+import { useOrderStore } from "@/stores/orderSessionStore";
+
+const sessionStore = useSessionStore();
+const orderStore = useOrderStore();
 
 const loading = ref(false);
 const discRate = ref(0);
@@ -76,31 +80,34 @@ const getDiscountRate = (discount_rate) => {
 
 const submit = async () => {
     loading.value = true;
-    const ordersColl = collection(db, "orders");
-    const ordersSnapshot = await getCountFromServer(ordersColl);
 
-    const docData = {
-        sln: (ordersSnapshot.data().count + 1),
-        customerName: order.value.customerName,
-        orderDate: order.value.orderDate,
-        salesman: order.value.salesman,
-        items: order.value.items,
-        status: order.value.status,
-        notes: order.value.notes,
-        discount: discRate.value,
-        totalBillAmt: order.value.totalBillAmt,
-        totalMrpBillAmt: order.value.totalMrpBillAmt,
-        createdBy: useSessionStore().currentUser.email
+    const sessionUserEmail = sessionStore.getUser().email;
+    console.log('This is the before submit with parameters log');
+    console.log(`this is for db: ${db}, this is for order: ${order.value}, this is for disc: ${discRate.value}, this is for email: ${sessionUserEmail}`);
+    console.log('This is the after submit with parameters log');
+    const submitResult = await addNewOrder(db, order.value, discRate.value, sessionUserEmail);
+
+    if (submitResult && submitResult.docRef) {
+
+      const orderData = await fetchSingleDocRef(submitResult.docRef);
+
+      // Save the order data to the Pinia store
+      orderStore.pushOrder(orderData);
+      console.log('push order : ', orderData);
+
+      // Notify user with message
+      notificationMsg.value = `Order created | sln : ${submitResult.sln}`;
+      itemTotalPrices.clear();
+      calcTotalBillAmt();
+      order.value = {...blankOrder, items: [ {name: '', qty: 0} ], discount: 0};
+      loading.value = false;
+    } else {
+      notificationMsg.value = `Did not Save..`;
+      calcTotalBillAmt();
+      loading.value = false;
     }
-    const docRef = await addDoc(ordersColl, docData);
-    console.debug("Document written with ID: ", docRef.id);
+};
 
-    notificationMsg.value = `Order created | sln: ${docData.sln}`;
-    itemTotalPrices.clear();
-    calcTotalBillAmt();
-    order.value = {...blankOrder, items: [ {name: '', qty: 0} ], discount: 0};
-    loading.value = false;
-}
 
 const isSaveButtonDisabled = computed(() => {
     const noItem = order.value.items == null || order.value.items.length === 0;
