@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="dashboard">
     <div class="time-interval">
       <label for="timeInterval">Select Time Interval:</label>
       <select v-model="selectedInterval">
@@ -12,49 +12,50 @@
         <option value="all">All</option>
       </select>
     </div>
-    <div class="main-container grid">
-      <div class="box-container">
-        <div class="above-box">
+    <div class="box-container grid-group">
+      <div class="recent-orders grid">
+        <div class="list box">
           <h6>Recent Orders</h6>
-          <div class="box">
-            <ul>
-              <li v-for="order in recentOrders" :key="order.sln">
-                <p> {{order.customerName}} || <span> {{order.orderDate}} </span></p>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div class="above-box">
-          <h6>Pending Orders ({{pendingOrdersLength}})</h6>
-          <div class="box">
-            <ul>
-              <li v-for="order in pendingOrders" :key="order.sln">
-                <p> {{order.customerName}} || <span> {{order.orderDate}} </span></p>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div class="above-box">
-          <h6>Last Payment Details</h6>
-          <div class="box">
-            <ul>
-              <li v-for="order in lastPaymentDetails" :key="order.sln">
-                <p> {{order.customerName}} || <span> {{order.orderDate}} </span> || <span> {{order.status}} </span> </p>
-              </li>
-            </ul>
-          </div>
+          <ul>
+            <li v-for="order in recentOrders" :key="order.sln">
+              <p>{{order.customerName}} || <span>{{order.orderDate}}</span></p>
+            </li>
+          </ul>
         </div>
       </div>
-      <div class="charts-container">
-        <canvas ref="salesChart"></canvas>
+      <div class="pending-orders grid">
+        <div class="list box">
+          <h6>Pending Orders ({{pendingOrdersLength}})</h6>
+          <ul>
+            <li v-for="order in pendingOrders" :key="order.sln">
+              <p>{{order.customerName}} || <span>{{order.orderDate}}</span></p>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="last-payment-details grid">
+        <div class="list box">
+          <h6>Last Payment Details</h6>
+          <ul>
+            <li v-for="order in lastPaymentDetails" :key="order.sln">
+              <p>{{order.customerName}} || <span>{{order.orderDate}}</span> || <span>{{order.status}}</span></p>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
-<!--    <div>-->
-<!--      <label for="dateRange">Select Date Range:</label>-->
-<!--      <input type="date" v-model="startDate" />-->
-<!--      <input type="date" v-model="endDate" />-->
-<!--      <button @click="fetchSalesData">Fetch Sales Data</button>-->
-<!--    </div>-->
+
+    <div class="charts-container grid-group">
+      <div class="recent-orders grid">
+        <div class="chart box">[chart]</div>
+      </div>
+      <div class="pending-orders grid">
+        <div class="chart box">[chart]</div>
+      </div>
+      <div class="last-payment-details grid">
+        <div class="chart box">[chart]</div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -130,49 +131,51 @@ onMounted(async () => {
 
 <style scoped>
 /* Add your styling here */
-.box-container {
-  display: flex;
-  justify-content: space-around;
-  margin: 20px;
+
+.time-interval {
+  text-align: center;
+  width: fit-content;
+  margin-top: 10px;
 }
 
-.above-box {
-  text-align: center;
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.box-container {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.charts-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 3% 1% 3% 1%;
 }
 
 .box {
   border: 1px solid #ccc;
   padding: 10px;
   border-radius: 5px;
-  margin: 10px;
   text-align: center;
+  flex-grow: 1; /* Allow the box to grow and take available space */
 }
 
-label {
-  font-weight: bold;
-  margin-right: 10px;
-}
-
-input,
-select,
-button {
-  margin-bottom: 10px;
-}
-
-.time-interval {
+.list,
+.chart {
   display: flex;
-  flex-direction: row;
-  justify-content: center;
-  margin-top: 10px;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.charts-container {
-  border: #999999;
-  border-style: dashed;
-}
-
-canvas {
-  max-width: 100%;
-  margin-top: 20px;
+select {
+  border: 1px solid #ccc;
+  padding: 5px;
+  text-align: center;
 }
 </style>
