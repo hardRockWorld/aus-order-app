@@ -1,4 +1,14 @@
-import {collection, query, getDoc, getDocs, orderBy, updateDoc, doc, getCountFromServer, addDoc} from "firebase/firestore";
+import {
+    addDoc,
+    collection,
+    doc,
+    getCountFromServer,
+    getDoc,
+    getDocs,
+    orderBy,
+    query,
+    updateDoc
+} from "firebase/firestore";
 import {db} from "@/fb";
 
 const addNewOrder = async (db, order, discRate, email) => {
@@ -33,11 +43,26 @@ const addNewOrder = async (db, order, discRate, email) => {
 const fetchSingleDocRef = async (docRef) => {
     // Retrieve the document data using the docRef
     const docSnapshot = await getDoc(docRef);
-    const orderData = docSnapshot.data();
-
-    return orderData;
+    return docSnapshot.data();
 };
 
+// Get a single order by sln
+const getOrderBySLN = async (sln) => {
+    const orderRef = doc(db, "orders", sln);
+
+    try {
+        const orderDoc = await getDoc(orderRef);
+        if (orderDoc.exists()) {
+            return { ...orderDoc.data(), id: orderDoc.id };
+        } else {
+            console.error("Order not found!");
+            return null;
+        }
+    } catch (error) {
+        console.error("Error getting order:", error);
+        return null;
+    }
+};
 
 const fetchAllOrders = async () => {
     let orders= []; // Clear the orders array
@@ -62,6 +87,7 @@ const updateEditOrder = async (db, currentOrder) => {
             items: currentOrder.items,
             status: currentOrder.status,
             notes: currentOrder.notes,
+            discount: currentOrder.discount,
             totalBillAmt: currentOrder.totalBillAmt,
             totalMrpBillAmt: currentOrder.totalMrpBillAmt,
             createdBy: currentOrder.createdBy
@@ -87,4 +113,4 @@ const updateUnEditOrder = async (db, currentOrder) => {
     return result;
 }
 
-export { addNewOrder, fetchSingleDocRef, fetchAllOrders, updateUnEditOrder, updateEditOrder };
+export { addNewOrder, fetchSingleDocRef, fetchAllOrders, updateUnEditOrder, updateEditOrder, getOrderBySLN };

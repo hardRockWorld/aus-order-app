@@ -82,9 +82,6 @@ const submit = async () => {
     loading.value = true;
 
     const sessionUserEmail = sessionStore.getUser().email;
-    console.log('This is the before submit with parameters log');
-    console.log(`this is for db: ${db}, this is for order: ${order.value}, this is for disc: ${discRate.value}, this is for email: ${sessionUserEmail}`);
-    console.log('This is the after submit with parameters log');
     const submitResult = await addNewOrder(db, order.value, discRate.value, sessionUserEmail);
 
     if (submitResult && submitResult.docRef) {
@@ -107,7 +104,6 @@ const submit = async () => {
       loading.value = false;
     }
 };
-
 
 const isSaveButtonDisabled = computed(() => {
     const noItem = order.value.items == null || order.value.items.length === 0;

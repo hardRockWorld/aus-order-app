@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import {ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import OrderItemRow from '@/components/OrderItemRow.vue';
@@ -11,7 +11,7 @@ import { useSessionStore } from "@/stores/userSessionStore";
 import { useOrderStore } from "@/stores/orderSessionStore";
 
 // Initialize the session store here
-const session = useSessionStore();
+const sessionStore = useSessionStore();
 const orderStore = useOrderStore();
 
 const notification = ref({
@@ -26,6 +26,9 @@ const isInvoiceButtonClicked = ref(false);
 const isLoading = ref(false);
 const editBtnEnabled = ref(false);
 
+// Introduce a flag to track saved changes in the modal
+const modalCloseWithoutSave = ref(false);
+
 onMounted(() => {
   // Get orders from the Pinia store when the component is mounted
   orders.value = orderStore.getOrders();
@@ -36,7 +39,9 @@ onUnmounted(() => {
   orderStore.saveOrders(orders.value);
 });
 
-watch(() => orders.value, (newOrders) => orderStore.saveOrders(newOrders));
+watch(() => orders.value, (newOrders) => {
+  orderStore.saveOrders(newOrders);
+});
 
 // calculate total discounted amount
 const calcTotalBillAmt = () => {
@@ -77,22 +82,7 @@ const updateStatus = async () => {
 
     const updateResult = await updateEditOrder(db, currentOrder.value);
     if (updateResult) {
-      notification.value.success = updateResult;
-      notification.value.msg = 'Saved successfully.';
-    } else {
-      notification.value.success = updateResult;
-      notification.value.msg = 'Failed.';
-    }
-
-    isLoading.value = false;
-}
-
-const orderDetails = async () => {
-    isLoading.value = true;
-
-    const updateResult = await updateUnEditOrder(db, currentOrder.value);
-    if (updateResult) {
-      // Add fetched orders to both the local component state and the session store
+      // Save the order data to the Pinia store
       orderStore.saveOrders(orders.value);
 
       notification.value.success = updateResult;
@@ -103,18 +93,46 @@ const orderDetails = async () => {
     }
 
     isLoading.value = false;
+    modalCloseWithoutSave.value = false; // Reset the flag after saving
+}
+
+const orderDetails = async () => {
+    isLoading.value = true;
+
+    const updateResult = await updateUnEditOrder(db, currentOrder.value);
+    if (updateResult) {
+      // Save the order data to the Pinia store
+      orderStore.saveOrders(orders.value);
+
+      notification.value.success = updateResult;
+      notification.value.msg = 'Saved successfully.';
+    } else {
+      notification.value.success = updateResult;
+      notification.value.msg = 'Failed.';
+    }
+
+    isLoading.value = false;
+    modalCloseWithoutSave.value = false; // Reset the flag after saving
 }
 
 const closeModal = () => {
-    currentOrder.value = null;
-    modalIsOpen.value = false;
-    editBtnEnabled.value = false;
-    notification.value = {
+  if (modalCloseWithoutSave) {
+    // Handle the case where the modal was closed without saving changes
+    orders.value = orderStore.getOrders();
+    console.log('Modal closed without saving changes');
+  }
+
+  // orderStore.saveOrders(orders.value);
+  currentOrder.value = null;
+  modalIsOpen.value = false;
+  editBtnEnabled.value = false;
+  notification.value = {
         success: true,
         msg: ''
-    };
-    itemTotalPrices.clear();
-    orderStore.getOrders(); // Fetch fresh orders after closing the modal
+  };
+
+  itemTotalPrices.clear();
+  modalCloseWithoutSave.value = false; // Reset the flag
 }
 
 const addOrderItem = () => {
@@ -238,21 +256,6 @@ const createPDF = (currentOrder) => {
   // Save the PDF
   doc.save(`Bill_${currentOrder?.sln}_(${dateFormatted}).pdf`);
 };
-
-// // Watch for changes in the orders array and update the length reference accordingly
-// watch(() => orders.value, () => {
-//   ordersLength.value = orders.value.length;
-// });
-//
-// const emitRecentOrders = () => {
-//   // Emit the recentOrders data to the parent component
-//   // Start index for the last 5 orders
-//   const startIndex = Math.max(0, ordersLength - 5);
-//   lastFewOrders.value = orders.value.slice(startIndex);
-//   console.log(lastFewOrders);
-//   emit('recentOrdersUpdated', lastFewOrders.value);
-// };
-
 </script>
 
 <template>
