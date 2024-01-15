@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import Dashboard from "@/views/Dashboard.vue";
 import OrderEntry from '@/views/OrderEntry.vue';
 import OrderList from '@/views/OrderList.vue';
 import LandingPage from '@/components/LandingPage.vue';
@@ -6,7 +7,7 @@ import Analysis from '@/components/Analysis.vue';
 import {
   onAuthStateChanged
 } from 'firebase/auth';
-import { auth } from '../fb';
+import { auth } from '@/fb';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -18,6 +19,15 @@ const router = createRouter({
       meta: {
         requiresAuth: true,
         title: 'Order Entry Form'
+      }
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: Dashboard,
+      meta: {
+        requiresAuth: true,
+        title: 'Dashboard'
       }
     },
     {

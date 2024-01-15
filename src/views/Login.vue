@@ -2,8 +2,8 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import {browserSessionPersistence, setPersistence, signInWithEmailAndPassword} from "firebase/auth";
-import { useSessionStore } from '../stores/userSessionStore';
-import { auth } from '../fb';
+import { useSessionStore } from '@/stores/userSessionStore';
+import { auth } from '@/fb';
 
 const router = useRouter();
 const { setUser, getIsLoading } = useSessionStore();
@@ -24,7 +24,9 @@ const login = async (email, password) => {
             .then(() => {
                 console.log('user is loggedin: ');
                 setUser(user, email=email, true, (new Date()).getTime());
-                router.push('/orders');
+
+                // Instead of showing the order list page, show dashboard instead
+                router.push('/dashboard');
             })
             .catch((error) => {
               console.log(error);

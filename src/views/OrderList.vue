@@ -1,12 +1,18 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import {ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import OrderItemRow from '@/components/OrderItemRow.vue';
 import { products } from '@/util/constants';
 import { fontNotoSansOriya } from '@/fonts/NotoSansOriya.js';
 import { db } from '@/fb';
-import { collection, query, getDocs, orderBy, updateDoc, doc } from "firebase/firestore";
+import { updateEditOrder, updateUnEditOrder } from "@/dbQueries";
+import { useSessionStore } from "@/stores/userSessionStore";
+import { useOrderStore } from "@/stores/orderSessionStore";
+
+// Initialize the session store here
+const sessionStore = useSessionStore();
+const orderStore = useOrderStore();
 
 const notification = ref({
     success: true,
@@ -14,25 +20,27 @@ const notification = ref({
 });
 
 const orders = ref([]);
-
 const currentOrder = ref(null);
 const modalIsOpen = ref(false);
 const isInvoiceButtonClicked = ref(false);
 const isLoading = ref(false);
 const editBtnEnabled = ref(false);
 
-const fetchOrders = async () => {
-    orders.value = []; // Clear the orders array
-    const q = query(collection(db, "orders"), orderBy('sln', 'desc'));
+// Introduce a flag to track saved changes in the modal
+const modalCloseWithoutSave = ref(false);
 
-    const querySnapshot = await getDocs(q);
-    querySnapshot.forEach((doc) => {
-        orders.value.push({...doc.data(), id: doc.id});
-    });
-};
+onMounted(() => {
+  // Get orders from the Pinia store when the component is mounted
+  orders.value = orderStore.getOrders();
+});
 
-onMounted(async () => {
-    await fetchOrders();
+onUnmounted(() => {
+  // Save orders to the Pinia store when the component is unmounted
+  orderStore.saveOrders(orders.value);
+});
+
+watch(() => orders.value, (newOrders) => {
+  orderStore.saveOrders(newOrders);
 });
 
 // calculate total discounted amount
@@ -65,60 +73,66 @@ const updateTotalMrpAmt = (productName, mrpTotal) => {
   calcTotalMrpAmount();
 }
 
-
 const updateStatus = async () => {
     if (isSaveButtonDisabled.value) {
          // Button is disabled, do not save data
         return;
     }
     isLoading.value = true;
-    const docRef = doc(db, "orders", currentOrder.value.id);
-    try {
-        await updateDoc(docRef, {
-            customerName: currentOrder.value.customerName,
-            orderDate: currentOrder.value.orderDate,
-            salesman: currentOrder.value.salesman,
-            items: currentOrder.value.items,
-            status: currentOrder.value.status,
-            notes: currentOrder.value.notes,
-            totalBillAmt: currentOrder.value.totalBillAmt,
-            totalMrpBillAmt: currentOrder.value.totalMrpBillAmt,
-            createdBy: currentOrder.value.createdBy
-        });
-        notification.value.msg = 'Saved successfully.';
-        notification.value.success = true;
-    } catch(e) {
-        notification.value.success = false;
-        notification.value.msg = 'Failed.';
-    }
-    isLoading.value = false;
 
+    const updateResult = await updateEditOrder(db, currentOrder.value);
+    if (updateResult) {
+      // Save the order data to the Pinia store
+      orderStore.saveOrders(orders.value);
+
+      notification.value.success = updateResult;
+      notification.value.msg = 'Saved successfully.';
+    } else {
+      notification.value.success = updateResult;
+      notification.value.msg = 'Failed.';
+    }
+
+    isLoading.value = false;
+    modalCloseWithoutSave.value = false; // Reset the flag after saving
 }
 
 const orderDetails = async () => {
     isLoading.value = true;
-    const docRef = doc(db, "orders", currentOrder.value.id);
-    try {
-        await updateDoc(docRef, {status: currentOrder.value.status, notes: currentOrder.value.notes});
-        notification.value.msg = 'Saved successfully.';
-        notification.value.success = true;
-    } catch(e) {
-        notification.value.success = false;
-        notification.value.msg = 'Failed.';
+
+    const updateResult = await updateUnEditOrder(db, currentOrder.value);
+    if (updateResult) {
+      // Save the order data to the Pinia store
+      orderStore.saveOrders(orders.value);
+
+      notification.value.success = updateResult;
+      notification.value.msg = 'Saved successfully.';
+    } else {
+      notification.value.success = updateResult;
+      notification.value.msg = 'Failed.';
     }
+
     isLoading.value = false;
+    modalCloseWithoutSave.value = false; // Reset the flag after saving
 }
 
 const closeModal = () => {
-    currentOrder.value = null;
-    modalIsOpen.value = false;
-    editBtnEnabled.value = false;
-    notification.value = {
+  if (modalCloseWithoutSave) {
+    // Handle the case where the modal was closed without saving changes
+    orders.value = orderStore.getOrders();
+    console.log('Modal closed without saving changes');
+  }
+
+  // orderStore.saveOrders(orders.value);
+  currentOrder.value = null;
+  modalIsOpen.value = false;
+  editBtnEnabled.value = false;
+  notification.value = {
         success: true,
         msg: ''
-    };
-    itemTotalPrices.clear();
-    fetchOrders(); // Fetch fresh orders after closing the modal
+  };
+
+  itemTotalPrices.clear();
+  modalCloseWithoutSave.value = false; // Reset the flag
 }
 
 const addOrderItem = () => {
@@ -242,7 +256,6 @@ const createPDF = (currentOrder) => {
   // Save the PDF
   doc.save(`Bill_${currentOrder?.sln}_(${dateFormatted}).pdf`);
 };
-
 </script>
 
 <template>

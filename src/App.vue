@@ -1,20 +1,31 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { RouterLink, RouterView, useRouter, useRoute } from 'vue-router';
-import { useSessionStore } from './stores/userSessionStore';
+import { useSessionStore } from '@/stores/userSessionStore';
+import { useOrderStore } from "@/stores/orderSessionStore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from './fb';
 
-const { currentUser, removeUser} = useSessionStore();
+const sessionStore = useSessionStore();
+const orderStore = useOrderStore();
 const router = useRouter();
 const route = useRoute();
 const path = computed(() => route.path);
 
-const proxyIsLoggedIn = ref(currentUser.isLoggedIn);
+const proxyIsLoggedIn = ref(sessionStore.getUserLoggedIn());
+const currentUser = ref(null);
 
 onMounted(() => {
   onAuthStateChanged(auth, (user) => {
     proxyIsLoggedIn.value = !!user;
+    currentUser.value = user;
+    console.log("user:");
+    console.log(user);
+    if (user) {
+      sessionStore.setUser(user, user.email, true, (new Date()).getTime());
+    } else {
+      sessionStore.removeUser();
+    }
   });
 });
 
@@ -22,7 +33,9 @@ const logout = () => {
   signOut(auth)
       .then(() => {
         console.log('Logged out');
-        removeUser();
+        orderStore.clearOrders();
+        sessionStorage.removeItem('dataFetched');
+        sessionStore.removeUser();
         proxyIsLoggedIn.value = false;
         router.push('/login');
       })
@@ -37,10 +50,12 @@ const logout = () => {
     <nav>
       <ul>
         <li><RouterLink class="logo-link contrast" to="/"><strong>ORDERS</strong></RouterLink></li>
+        <li><RouterLink class="logo-link contrast" v-if="proxyIsLoggedIn" to="/dashboard"><strong>Dashboard</strong></RouterLink></li>
       </ul>
+      <h4 v-if="proxyIsLoggedIn && currentUser">Welcome {{currentUser.email}}</h4>
       <ul>
         <li><RouterLink to="/orders" v-if="proxyIsLoggedIn" class="contrast">Order List</RouterLink></li>
-        <li><RouterLink to="/login" v-if="!proxyIsLoggedIn && path != '/login'" class="contrast">Login</RouterLink></li>
+        <li><RouterLink to="/login" v-if="!proxyIsLoggedIn && path !== '/login'" class="contrast">Login</RouterLink></li>
         <li v-if="proxyIsLoggedIn"><a href="#" @click.prevent="logout" class="contrast">Logout</a></li>
       </ul>
     </nav>

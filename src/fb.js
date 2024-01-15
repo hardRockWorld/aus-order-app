@@ -4,9 +4,6 @@ import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import {isEmulating, isProductionEnv} from './environment.js';
 
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
 let firebaseConfig;
 console.log('isEmulating: ' + isEmulating);
 console.log('isProductionEnv: ' + isProductionEnv());
