@@ -45,17 +45,17 @@
       </div>
     </div>
 
-    <div class="charts-container grid-group">
-      <div class="recent-orders grid">
-        <div class="chart box">[chart]</div>
-      </div>
-      <div class="pending-orders grid">
-        <div class="chart box">[chart]</div>
-      </div>
-      <div class="last-payment-details grid">
-        <div class="chart box">[chart]</div>
-      </div>
-    </div>
+<!--    <div class="charts-container grid-group">-->
+<!--      <div class="recent-orders grid">-->
+<!--        <div class="chart box">[chart]</div>-->
+<!--      </div>-->
+<!--      <div class="pending-orders grid">-->
+<!--        <div class="chart box">[chart]</div>-->
+<!--      </div>-->
+<!--      <div class="last-payment-details grid">-->
+<!--        <div class="chart box">[chart]</div>-->
+<!--      </div>-->
+<!--    </div>-->
   </div>
 </template>
 
@@ -204,6 +204,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-bottom: 5%;
 }
 
 .box-container {
