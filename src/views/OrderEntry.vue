@@ -13,20 +13,9 @@ const orderStore = useOrderStore();
 const loading = ref(false);
 const discRate = ref(0);
 
-const getFormattedDate = (date) => {
-  var year = date.getFullYear();
-
-  var month = (1 + date.getMonth()).toString();
-  month = month.length > 1 ? month : '0' + month;
-
-  var day = date.getDate().toString();
-  day = day.length > 1 ? day : '0' + day;
-
-  return year + '-' + month + '-' + day;
-}
 const blankOrder = {
     customerName: '',
-    orderDate: getFormattedDate(new Date()),
+    orderDate: Date.now(),
     salesman: '',
     items: [ {name: '', qty: 0} ],
     status: 'placed',
@@ -82,6 +71,7 @@ const submit = async () => {
     loading.value = true;
 
     const sessionUserEmail = sessionStore.getUser().email;
+    console.log('this is before calling the addNewOrder in db query: ', order.value.orderDate);
     const submitResult = await addNewOrder(db, order.value, discRate.value, sessionUserEmail);
 
     if (submitResult && submitResult.docRef) {
@@ -128,7 +118,7 @@ const isSaveButtonDisabled = computed(() => {
                     </label>
 
                     <label for="date">Date</label>
-                    <input type="date" v-model="order.orderDate" id="date" name="date" placeholder="Date" required>
+                    <input type="datetime-local" v-model="order.orderDate" id="date" name="date" placeholder="Date" required>
 
                     <label for="salesman">Salesman</label>
                     <input type="text" v-model="order.salesman" id="salesman" name="salesman" placeholder="Salesman" required>

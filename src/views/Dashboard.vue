@@ -18,7 +18,7 @@
           <h6>Recent Orders</h6>
           <ul>
             <li v-for="order in recentOrders" :key="order.sln">
-              <p>{{order.customerName}} || <span>{{order.orderDate}}</span></p>
+              <p>{{order.customerName}} || <span>{{getFormattedDate(new Date(order.orderDate), false)}}</span></p>
             </li>
           </ul>
         </div>
@@ -28,7 +28,7 @@
           <h6>Pending Orders ({{pendingOrdersLength}})</h6>
           <ul>
             <li v-for="order in pendingOrders" :key="order.sln">
-              <p>{{order.customerName}} || <span>{{order.orderDate}}</span></p>
+              <p>{{order.customerName}} || <span>{{getFormattedDate(new Date(order.orderDate), false)}}</span></p>
             </li>
           </ul>
         </div>
@@ -38,24 +38,30 @@
           <h6>Last Payment Details ({{lastPaymentDetailsLength}})</h6>
           <ul>
             <li v-for="order in lastPaymentDetails" :key="order.sln">
-              <p>{{order.customerName}} || <span>{{order.orderDate}}</span> || <span>{{order.status}}</span></p>
+              <p>{{order.customerName}} || <span>{{getFormattedDate(new Date(order.orderDate), false)}}</span> || <span>{{order.status}}</span></p>
             </li>
           </ul>
         </div>
       </div>
     </div>
 
-<!--    <div class="charts-container grid-group">-->
-<!--      <div class="recent-orders grid">-->
-<!--        <div class="chart box">[chart]</div>-->
-<!--      </div>-->
-<!--      <div class="pending-orders grid">-->
-<!--        <div class="chart box">[chart]</div>-->
-<!--      </div>-->
-<!--      <div class="last-payment-details grid">-->
-<!--        <div class="chart box">[chart]</div>-->
-<!--      </div>-->
-<!--    </div>-->
+    <div class="charts-container grid-group">
+      <div class="recent-orders grid">
+        <div class="chart box">
+          <charts :allData="chartData" :chartTitle="chartTitle" :xAxisData="xAxis" :selectedInterval="selectedInterval" />
+        </div>
+      </div>
+      <!-- <div class="pending-orders grid">
+        <div class="chart box">
+          <Charts :all-data="allChartData()" :pending-data="pendingChartData()" :payment-data="paymentChartData()" :selectedInterval="selectedInterval"/>
+        </div>
+      </div>
+      <div class="last-payment-details grid">
+        <div class="chart box">
+          <Charts :all-data="allChartData()" :pending-data="pendingChartData()" :payment-data="paymentChartData()" :selectedInterval="selectedInterval"/>
+        </div>
+      </div> -->
+    </div>
   </div>
 </template>
 
@@ -64,11 +70,14 @@ import { onMounted, ref, watch, watchEffect } from 'vue';
 import { useSessionStore } from "@/stores/userSessionStore";
 import { useOrderStore } from "@/stores/orderSessionStore";
 import { fetchAllOrders } from "@/dbQueries";
+import Charts from "@/components/Charts.vue";
+import { getFormattedDate } from '@/util/util';
 
 const sessionStore = useSessionStore();
 const orderStore = useOrderStore();
 
 const orders = ref([]);
+const chartData = ref([]);
 const pendingOrdersLength = ref(0);
 const recentOrders = ref([]);
 const pendingOrders = ref([]);
@@ -77,6 +86,8 @@ const lastPaymentDetailsLength = ref(0);
 const startDate = ref('');
 const endDate = ref('');
 const selectedInterval = ref('today');
+const chartTitle = ref('');
+const xAxis = ref([]);
 
 // Today's Date
 const today = new Date();
@@ -89,17 +100,34 @@ const allOrders = async () => {
 
 // Update the orders data
 const updateOrdersData = () => {
-  const timeInterval = getStartDate();
+  const {timeInterval, title, xaxis} = getStartDate();
+
+  chartTitle.value = title;
+  xAxis.value = xaxis;
+
+  console.log('the time interval selected in dashboard comp is:', timeInterval);
+
+  // Clear the chartData
+  const {data, filteredOrders} = getChartData(selectedInterval.value, timeInterval);
+  console.log('Returned data:');
+  console.log(data);
+  chartData.value = convertDataMapToArray(data, xaxis);
+  console.log('the chart data present is:');
+  console.log(chartData.value);
+  console.log('the chart xaxis is:');
+  console.log(xAxis.value);
+  // Log filtered orders
+  console.log('filtered orders after calling getChartData is: ', filteredOrders);
 
   recentOrders.value = orders.value.slice(0, 5);
   pendingOrders.value = orders.value.filter(
       item => {
-        return (new Date(item.orderDate) >= timeInterval) && (item.status === 'placed')
+        return (new Date(item.orderDate).getTime() >= timeInterval) && (item.status === 'placed')
       }
   );
   lastPaymentDetails.value = orders.value.filter(
       item => {
-        return (new Date(item.orderDate) >= timeInterval) && (item.status === 'recieved')
+        return (new Date(item.orderDate).getTime() >= timeInterval) && (item.status === 'recieved')
       }
   );
 
@@ -109,34 +137,125 @@ const updateOrdersData = () => {
 
 // Get start date based on the selected interval
 const getStartDate = () => {
-  let result;
+  let timeInterval;
+  let title;
+  let xaxis;
+
+  // Define getMonth()
+  const getMonthName = (offset) => {
+    const thisMonth = new Date().getMonth()+1;
+    const thisYear = new Date().getFullYear()+1900;
+
+    const date = new Date(Date.UTC(2000, thisMonth - offset - 1, 1));
+
+    return date.toLocaleString('en', { month: 'long' });
+  };
+
   switch (selectedInterval.value) {
-    case 'today':
-      result = today.getTime() - 24 * 60 * 60 * 1000;
-      break;
     case 'weekly':
-      result = today.getTime() - 7 * 24 * 60 * 60 * 1000;
+      timeInterval = today.getTime() - 7 * 24 * 60 * 60 * 1000;
+      title = 'Orders This Week';
+      xaxis = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       break;
     case 'monthly':
-      result = today.getTime() - 30 * 24 * 60 * 60 * 1000;
+      timeInterval = today.getTime() - 30 * 24 * 60 * 60 * 1000;
+      title = 'Orders This Month';
+      xaxis = Array.from({length: 30}, (_, i) => i + 1);
       break;
     case 'quarterly':
-      result = today.getTime() - 3 * 30 * 24 * 60 * 60 * 1000;
+      timeInterval = today.getTime() - 3 * 30 * 24 * 60 * 60 * 1000;
+      title = 'Orders This Quarter';
+      xaxis = Array.from({ length: 3 }, (_, i) => getMonthName(2-i));  //['november', 'december', 'january']
       break;
     case 'halfYearly':
-      result = today.getTime() - 6 * 30 * 24 * 60 * 60 * 1000;
+      timeInterval = today.getTime() - 6 * 30 * 24 * 60 * 60 * 1000;
+      title = 'Orders last 6 months';
+      xaxis = Array.from({ length: 6 }, (_, i) => getMonthName(5-i));
       break;
     case 'yearly':
-      result = today.getTime() - 12 * 30 * 24 * 60 * 60 * 1000;
+      timeInterval = today.getTime() - 12 * 30 * 24 * 60 * 60 * 1000;
+      title = 'Orders last 12 months';
+      xaxis = Array.from({ length: 12 }, (_, i) => getMonthName(11-i));
       break;
     case 'all':
-      result = today.getTime() - 74 * 12 * 30 * 24 * 60 * 60 * 1000;
+      timeInterval = today.getTime() - 74 * 12 * 30 * 24 * 60 * 60 * 1000;
+      title = 'All Orders till date';
+      xaxis = Array.from({ length: 74 }, (_, i) => getMonthName(73-i));
       break;
+    case 'today':
     default:
-      result = today.getTime() - 24 * 60 * 60 * 1000;
+      timeInterval = today.getTime() - 24 * 60 * 60 * 1000;
+      title = 'Orders Today';
+      xaxis = [
+        '12AM', '1AM', '2AM', '3AM', '4AM', '5AM', '6AM', '7AM', '8AM', '9AM', '10AM', '11AM',
+        '12PM', '1PM', '2PM', '3PM', '4PM', '5PM', '6AM', '7PM', '8PM', '9PM', '10PM', '11PM',
+      ];
   }
-  console.log("start date will be: ", new Date(result));
-  return result;
+  console.log("start date will be: ", new Date(timeInterval));
+  console.log("Title and xaxix will be: ", title);
+  console.log(xaxis);
+
+  return {timeInterval, title, xaxis};
+};
+
+const getChartData = (interval, startTime) => {
+  console.log('getChartData interval & start time are: ');
+  console.log('interval: ', interval);
+  console.log('start time: ', startTime);
+  let data = new Map();
+
+  // Check orders variable value
+  console.log(orders.value);
+  
+  const filteredOrders = orders.value.filter((order) => {
+    if (new Date(order.orderDate).getTime() >= startTime) {
+      let dateKey;
+      switch (interval) {
+        case 'weekly':
+          dateKey = new Date(order.orderDate).toLocaleDateString('en-US', {weekday: 'short'});
+          console.log('Value of weekly date key is: ', new Date(order.orderDate).toLocaleDateString('en-US', {weekday: 'short'}));
+          break;
+        case 'monthly':
+          dateKey = new Date(order.orderDate).getDate();
+          console.log('Value of monthly date key is: ', new Date(order.orderDate).getDate());
+          break;
+        case 'quarterly':
+          dateKey = new Date(order.orderDate).toLocaleString('en-US', {month: 'long'});
+          console.log('Value of quarterly date key is: ', new Date(order.orderDate).toLocaleString('en-US', {month: 'long'}));
+          break;
+        case 'halfYearly':
+          dateKey = new Date(order.orderDate).toLocaleString('en-US', {month: 'long'});
+          console.log('Value of halfYearly date key is: ', new Date(order.orderDate).toLocaleString('en-US', {month: 'long'}));
+          break;
+        case 'yearly':
+          dateKey = new Date(order.orderDate).toLocaleString('en-US', {month: 'long'});
+          console.log('Value of yearly date key is: ', new Date(order.orderDate).toLocaleString('en-US', {month: 'long'}));
+          break;
+        case 'all':
+          dateKey = (new Date(order.orderDate).getFullYear()+1900) + '-' + (new Date(order.orderDate).getMonth() + 1);
+          break;
+        default:
+          const hour = new Date(order.orderDate).getHours();
+          dateKey = (hour % 12 == 0 ? 12 : hour % 12) + (hour < 12 ? 'AM' : 'PM');
+          break;
+      }
+      if (!data.has(dateKey)) {
+        data.set(dateKey, 0);
+      }
+      data.set(dateKey, data.get(dateKey) + 1);
+      return true;
+    }
+  });
+  console.log('getChartData:');
+  console.log(data);
+  return {data, filteredOrders};
+};
+const convertDataMapToArray = (data, keys) => {
+  const results = [];
+  keys.forEach((key) => {
+    results.push(data.has(key) ? data.get(key) : 0);
+  });
+  return results;
 };
 
 watch(() => pendingOrders.value, () => {
@@ -159,6 +278,22 @@ watch(() => orders.value, () => {
 // const updateChartData = () => {
 // Implement logic to update chart data based on selected time interval
 // };
+
+
+// Prepare all chart data
+const allChartData = () => {
+  return chartData.value;
+};
+
+// Prepare pending orders chart data
+const pendingChartData = () => {
+  return pendingOrders.value;
+}
+
+// Prepare last payment chart data
+const paymentChartData = () => {
+  return lastPaymentDetails.value;
+}
 
 // Watch for changes in selectedInterval and update orders accordingly
 watchEffect( () => {
