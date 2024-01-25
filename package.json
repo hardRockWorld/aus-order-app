@@ -3,10 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "build-deploy": "vite build && firebase deploy --only hosting"
+    "dev": "firebase use staging && vite",
+    "build": "firebase use default && vite build --sourcemap=false",
+    "preview": "firebase use staging && vite preview",
+    "build-deploy": "firebase use default && vite build --sourcemap=false && firebase deploy --only hosting",
+    "debug": "firebase use staging && vite --mode development"
   },
   "dependencies": {
     "echarts": "^5.4.3",

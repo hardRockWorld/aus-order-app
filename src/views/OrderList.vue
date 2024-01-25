@@ -9,6 +9,7 @@ import { db } from '@/fb';
 import { updateEditOrder, updateUnEditOrder } from "@/dbQueries";
 import { useSessionStore } from "@/stores/userSessionStore";
 import { useOrderStore } from "@/stores/orderSessionStore";
+import { getFormattedDate } from '@/util/util';
 
 // Initialize the session store here
 const sessionStore = useSessionStore();
@@ -146,6 +147,7 @@ const isSaveButtonDisabled = computed(() => {
     return hasInvalidQuantity || noItem;
 });
 
+// Used for generating formatted date in the invoice pdf
 const formatDate = (dateString) => {
   // Split the string into [YYYY, MM, DD]
   let parts = dateString.split('-');
@@ -170,7 +172,7 @@ const createPDF = (currentOrder) => {
   const contentFontSize = 12;
   const lineSpacing = 8; // Adjust line spacing as needed
   const horizontalSpacing = 10; // Adjust horizontal spacing as needed
-  const dateFormatted = formatDate(currentOrder?.orderDate);
+  const dateFormatted = formatDate(getFormattedDate(new Date(currentOrder?.orderDate), false));
   // Add a title
   doc.setFontSize(titleFontSize);
   doc.text('Invoice', 100, 20);
@@ -221,7 +223,7 @@ const createPDF = (currentOrder) => {
       ]);
     } else {
       // If currentOrder is an object, convert it to an array first
-      const orderArray = Object.values(invoiceItems);
+      const orderArray = Object.values(invoiceItemcurrentOrder?.orderDates);
       data = orderArray.items.map((item, i) => [
         `${i + 1}`, // Adding 1 to index to start from 1
         `${item.name}`,
@@ -282,7 +284,7 @@ const createPDF = (currentOrder) => {
                             <tr v-for="order in orders" :key="order?.sln" class="order-item-row" @click="currentOrder = order; (isInvoiceButtonClicked ? modalIsOpen = false : modalIsOpen = true);">
                                 <td>{{ order?.sln }}</td>
                                 <td>{{ order?.customerName }}</td>
-                                <td>{{ order?.orderDate }}</td>
+                                <td>{{ getFormattedDate(new Date(order.orderDate), false) }}</td>
                                 <td><code v-if="order?.status">{{ order?.status }}</code></td>
                                 <td>{{ order?.salesman }}</td>
                                 <td>{{ order?.notes }}</td>

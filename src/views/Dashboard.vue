@@ -18,7 +18,7 @@
           <h6>Recent Orders</h6>
           <ul>
             <li v-for="order in recentOrders" :key="order.sln">
-              <p>{{order.customerName}} || <span>{{order.orderDate}}</span></p>
+              <p>{{order.customerName}} || <span>{{getFormattedDate(new Date(order.orderDate), false)}}</span></p>
             </li>
           </ul>
         </div>
@@ -28,7 +28,7 @@
           <h6>Pending Orders ({{pendingOrdersLength}})</h6>
           <ul>
             <li v-for="order in pendingOrders" :key="order.sln">
-              <p>{{order.customerName}} || <span>{{order.orderDate}}</span></p>
+              <p>{{order.customerName}} || <span>{{getFormattedDate(new Date(order.orderDate), false)}}</span></p>
             </li>
           </ul>
         </div>
@@ -38,7 +38,7 @@
           <h6>Last Payment Details ({{lastPaymentDetailsLength}})</h6>
           <ul>
             <li v-for="order in lastPaymentDetails" :key="order.sln">
-              <p>{{order.customerName}} || <span>{{order.orderDate}}</span> || <span>{{order.status}}</span></p>
+              <p>{{order.customerName}} || <span>{{getFormattedDate(new Date(order.orderDate), false)}}</span> || <span>{{order.status}}</span></p>
             </li>
           </ul>
         </div>
@@ -71,6 +71,7 @@ import { useSessionStore } from "@/stores/userSessionStore";
 import { useOrderStore } from "@/stores/orderSessionStore";
 import { fetchAllOrders } from "@/dbQueries";
 import Charts from "@/components/Charts.vue";
+import { getFormattedDate } from '@/util/util';
 
 const sessionStore = useSessionStore();
 const orderStore = useOrderStore();
@@ -215,8 +216,8 @@ const getChartData = (interval, startTime) => {
           console.log('Value of weekly date key is: ', new Date(order.orderDate).toLocaleDateString('en-US', {weekday: 'short'}));
           break;
         case 'monthly':
-          dateKey = new Date(order.orderDate).getDay();
-          console.log('Value of monthly date key is: ', new Date(order.orderDate).getDay());
+          dateKey = new Date(order.orderDate).getDate();
+          console.log('Value of monthly date key is: ', new Date(order.orderDate).getDate());
           break;
         case 'quarterly':
           dateKey = new Date(order.orderDate).toLocaleString('en-US', {month: 'long'});
