@@ -139,7 +139,7 @@ dist
 # for firebase,firebase emulator
 .firebase
 .firebaserc
-# no firebase.json because it is needed at time of deploying the app
+firebase.json
 firestore.indexes.json
 firestore.rules
 firebase-debug.log

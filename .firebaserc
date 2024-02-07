@@ -1,8 +1,0 @@
-{
-  "projects": {
-    "default": "aus-order-form",
-    "staging": "aus-order-app-test"
-  },
-  "targets": {},
-  "etags": {}
-}
