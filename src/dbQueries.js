@@ -19,6 +19,7 @@ const addNewOrder = async (db, order, discRate, email) => {
     const docData = {
         sln: sln,
         customerName: order.customerName,
+        customerAddress: order.customerAddress,
         orderDate: order.orderDate,
         salesman: order.salesman,
         items: order.items,
@@ -83,6 +84,7 @@ const updateEditOrder = async (db, currentOrder) => {
     try {
         await updateDoc(docRef, {
             customerName: currentOrder.customerName,
+            customerAddress: currentOrder.customerAddress,
             orderDate: currentOrder.orderDate,
             salesman: currentOrder.salesman,
             items: currentOrder.items,

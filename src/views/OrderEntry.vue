@@ -15,6 +15,7 @@ const discRate = ref(0);
 
 const blankOrder = {
     customerName: '',
+    customerAddress: '',
     orderDate: Date.now(),
     salesman: '',
     items: [ {name: '', qty: 0} ],
@@ -115,6 +116,11 @@ const isSaveButtonDisabled = computed(() => {
                     <label for="customer_name">
                         Customer Name
                         <input type="text" v-model="order.customerName" id="customer_name" name="customer_name" placeholder="Customer name" required>
+                    </label>
+
+                    <label for="customer_address">
+                        Customer Address
+                        <input type="text" v-model="order.customerAddress" id="customer_address" name="customer_address" placeholder="Customer address" required>
                     </label>
 
                     <label for="date">Date</label>
