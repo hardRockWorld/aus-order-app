@@ -271,6 +271,7 @@ const createPDF = (currentOrder) => {
                             <tr>
                               <th scope="col">#</th>
                               <th scope="col">Customer</th>
+                              <th scope="col">Address</th>
                               <th scope="col">Date</th>
                               <th scope="col">Status</th>
                               <th scope="col">Salesman</th>
@@ -284,6 +285,7 @@ const createPDF = (currentOrder) => {
                             <tr v-for="order in orders" :key="order?.sln" class="order-item-row" @click="currentOrder = order; (isInvoiceButtonClicked ? modalIsOpen = false : modalIsOpen = true);">
                                 <td>{{ order?.sln }}</td>
                                 <td>{{ order?.customerName }}</td>
+                                <td>{{ order?.customerAddress }}</td>
                                 <td>{{ getFormattedDate(new Date(order.orderDate), false) }}</td>
                                 <td><code v-if="order?.status">{{ order?.status }}</code></td>
                                 <td>{{ order?.salesman }}</td>
@@ -317,6 +319,11 @@ const createPDF = (currentOrder) => {
                 <label for="customer_name">
                     Customer Name
                     <input type="text" v-model="currentOrder.customerName" id="customer_name" name="customer_name" placeholder="Customer name" required>
+                </label>
+
+                <label for="customer_address">
+                    Customer Name
+                    <input type="text" v-model="currentOrder.customerAddress" id="customer_address" name="customer_address" placeholder="Customer address" required>
                 </label>
 
                 <label for="date">Date</label>

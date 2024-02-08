@@ -18,7 +18,7 @@
           <h6>Recent Orders</h6>
           <ul>
             <li v-for="order in recentOrders" :key="order.sln">
-              <p>{{order.customerName}} || <span>{{getFormattedDate(new Date(order.orderDate), false)}}</span></p>
+              <p>{{order.customerName}} || {{order.customerAddress}} || <span>{{getFormattedDate(new Date(order.orderDate), false)}}</span></p>
             </li>
           </ul>
         </div>
@@ -28,7 +28,7 @@
           <h6>Pending Orders ({{pendingOrdersLength}})</h6>
           <ul>
             <li v-for="order in pendingOrders" :key="order.sln">
-              <p>{{order.customerName}} || <span>{{getFormattedDate(new Date(order.orderDate), false)}}</span></p>
+              <p>{{order.customerName}} || {{order.customerAddress}} || <span>{{getFormattedDate(new Date(order.orderDate), false)}}</span></p>
             </li>
           </ul>
         </div>
@@ -38,7 +38,7 @@
           <h6>Last Payment Details ({{lastPaymentDetailsLength}})</h6>
           <ul>
             <li v-for="order in lastPaymentDetails" :key="order.sln">
-              <p>{{order.customerName}} || <span>{{getFormattedDate(new Date(order.orderDate), false)}}</span> || <span>{{order.status}}</span></p>
+              <p>{{order.customerName}} || {{order.customerAddress}} || <span>{{getFormattedDate(new Date(order.orderDate), false)}}</span> || <span>{{order.status}}</span></p>
             </li>
           </ul>
         </div>
