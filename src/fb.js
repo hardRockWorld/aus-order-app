@@ -5,8 +5,6 @@ import { getAuth, connectAuthEmulator } from "firebase/auth";
 import {isEmulating, isProductionEnv} from './environment.js';
 
 let firebaseConfig;
-console.log('isEmulating: ' + isEmulating);
-console.log('isProductionEnv: ' + isProductionEnv());
 
 if (isProductionEnv()) {
   // Your web app's Prod Firebase configuration

@@ -1,8 +1,4 @@
 const getFormattedDate = (date, withTime = true) => {
-    console.log('date:');
-    console.log(date);
-    console.log('withTime:');
-    console.log(withTime);
     if (date === undefined) {
         return '';
     }

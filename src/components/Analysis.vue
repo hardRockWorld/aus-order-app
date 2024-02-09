@@ -79,11 +79,9 @@ async function getTopOrderedProducts(numProducts) {
       orderData.items.forEach((item) => {
         const itemName = item.name;
         const itemQuantity = Number(item.qty);
-        console.log(itemName, itemQuantity);
 
          // Check if the item already exists in ordersCalculate
         const existingItemIndex = ordersCalculate.value.findIndex(item => item.name === itemName);
-        console.log(existingItemIndex);
 
         if (existingItemIndex !== -1) {
           // Item already exists, update the quantity
@@ -106,7 +104,6 @@ async function getTopOrderedProducts(numProducts) {
 
     // After sorting, console log the first 5 items
     topProducts = ordersCalculate.value.slice(0, numProducts);
-    console.log('Top ordered products:', topProducts);
 
     // Update the chart options
     option.value.series[0].data = topProducts.map(product => ({ value: product.qty, name: product.name }));

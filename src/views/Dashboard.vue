@@ -105,19 +105,9 @@ const updateOrdersData = () => {
   chartTitle.value = title;
   xAxis.value = xaxis;
 
-  console.log('the time interval selected in dashboard comp is:', timeInterval);
-
   // Clear the chartData
   const {data, filteredOrders} = getChartData(selectedInterval.value, timeInterval);
-  console.log('Returned data:');
-  console.log(data);
   chartData.value = convertDataMapToArray(data, xaxis);
-  console.log('the chart data present is:');
-  console.log(chartData.value);
-  console.log('the chart xaxis is:');
-  console.log(xAxis.value);
-  // Log filtered orders
-  console.log('filtered orders after calling getChartData is: ', filteredOrders);
 
   recentOrders.value = orders.value.slice(0, 5);
   pendingOrders.value = orders.value.filter(
@@ -191,21 +181,12 @@ const getStartDate = () => {
         '12PM', '1PM', '2PM', '3PM', '4PM', '5PM', '6AM', '7PM', '8PM', '9PM', '10PM', '11PM',
       ];
   }
-  console.log("start date will be: ", new Date(timeInterval));
-  console.log("Title and xaxix will be: ", title);
-  console.log(xaxis);
 
   return {timeInterval, title, xaxis};
 };
 
 const getChartData = (interval, startTime) => {
-  console.log('getChartData interval & start time are: ');
-  console.log('interval: ', interval);
-  console.log('start time: ', startTime);
   let data = new Map();
-
-  // Check orders variable value
-  console.log(orders.value);
   
   const filteredOrders = orders.value.filter((order) => {
     if (new Date(order.orderDate).getTime() >= startTime) {
@@ -213,23 +194,18 @@ const getChartData = (interval, startTime) => {
       switch (interval) {
         case 'weekly':
           dateKey = new Date(order.orderDate).toLocaleDateString('en-US', {weekday: 'short'});
-          console.log('Value of weekly date key is: ', new Date(order.orderDate).toLocaleDateString('en-US', {weekday: 'short'}));
           break;
         case 'monthly':
           dateKey = new Date(order.orderDate).getDate();
-          console.log('Value of monthly date key is: ', new Date(order.orderDate).getDate());
           break;
         case 'quarterly':
           dateKey = new Date(order.orderDate).toLocaleString('en-US', {month: 'long'});
-          console.log('Value of quarterly date key is: ', new Date(order.orderDate).toLocaleString('en-US', {month: 'long'}));
           break;
         case 'halfYearly':
           dateKey = new Date(order.orderDate).toLocaleString('en-US', {month: 'long'});
-          console.log('Value of halfYearly date key is: ', new Date(order.orderDate).toLocaleString('en-US', {month: 'long'}));
           break;
         case 'yearly':
           dateKey = new Date(order.orderDate).toLocaleString('en-US', {month: 'long'});
-          console.log('Value of yearly date key is: ', new Date(order.orderDate).toLocaleString('en-US', {month: 'long'}));
           break;
         case 'all':
           dateKey = (new Date(order.orderDate).getFullYear()+1900) + '-' + (new Date(order.orderDate).getMonth() + 1);
@@ -246,8 +222,7 @@ const getChartData = (interval, startTime) => {
       return true;
     }
   });
-  console.log('getChartData:');
-  console.log(data);
+
   return {data, filteredOrders};
 };
 const convertDataMapToArray = (data, keys) => {
@@ -313,13 +288,11 @@ onMounted(async () => {
   const dataFetched = sessionStorage.getItem('dataFetched');
   if (!dataFetched) {
     // Fetch from db api
-    console.log('Fetch from db api');
     await allOrders();
     updateOrdersData();
     sessionStorage.setItem('dataFetched', 'true');
   } else {
     // Get from session storage
-    console.log('Get from session storage');
     orders.value = orderStore.getOrders();
     updateOrdersData();
   }

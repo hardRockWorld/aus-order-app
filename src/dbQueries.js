@@ -30,7 +30,7 @@ const addNewOrder = async (db, order, discRate, email) => {
         totalMrpBillAmt: order.totalMrpBillAmt,
         createdBy: email
     }
-    console.log('the order date befor saving the new order is: ', order.orderDate);
+
     const docRef = await addDoc(ordersColl, docData);
     console.debug("Document written with ID: ", docRef.id);
     console.debug("Document is: ", docRef);

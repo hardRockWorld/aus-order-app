@@ -19,8 +19,6 @@ onMounted(() => {
   onAuthStateChanged(auth, (user) => {
     proxyIsLoggedIn.value = !!user;
     currentUser.value = user;
-    console.log("user:");
-    console.log(user);
     if (user) {
       sessionStore.setUser(user, user.email, true, (new Date()).getTime());
     } else {

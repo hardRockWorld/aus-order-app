@@ -47,10 +47,6 @@ const chartTitle = props.chartTitle;
 const xAxisData = props.xAxisData;
 const selectedInterval = props.selectedInterval;
 
-console.log('this is props allData: ', allData);
-console.log('this is the props chart title: ', chartTitle);
-console.log('this is for xAxis data: ', xAxisData);
-
 use([
   CanvasRenderer,
   LineChart,
@@ -93,7 +89,6 @@ watch(props, (newProps) => {
 watch(
     () => selectedInterval,
     (newInterval) => {
-        console.log('this is the new interval: ', newInterval);
       switch (newInterval) {
         case 'weekly':
           chartOptions.value = {
