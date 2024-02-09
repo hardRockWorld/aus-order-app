@@ -128,7 +128,6 @@ const closeModal = () => {
   if (modalCloseWithoutSave) {
     // Handle the case where the modal was closed without saving changes
     orders.value = orderStore.getOrders();
-    console.log('Modal closed without saving changes');
   }
 
   // orderStore.saveOrders(orders.value);

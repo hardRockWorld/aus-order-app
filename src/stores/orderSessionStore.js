@@ -8,14 +8,12 @@ export const useOrderStore = defineStore('orders', {
         // Save the orders
         saveOrders(orders) {
             this.orders = orders ?? [];
-            console.log('Order # is: ' + this.orders.length);
             // Save orders to sessionStorage
             sessionStorage.setItem('orders', JSON.stringify(orders));
         },
 
         pushOrder(order) {
             this.orders.unshift(order);
-            console.log('Order # is: ' + this.orders.length);
             // Save orders to sessionStorage
             // const ordersArray = [{ /* order data */ }, { /* another order data */ }];
             sessionStorage.setItem('orders', JSON.stringify(this.orders));

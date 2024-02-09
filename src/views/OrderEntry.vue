@@ -72,7 +72,6 @@ const submit = async () => {
     loading.value = true;
 
     const sessionUserEmail = sessionStore.getUser().email;
-    console.log('this is before calling the addNewOrder in db query: ', order.value.orderDate);
     const submitResult = await addNewOrder(db, order.value, discRate.value, sessionUserEmail);
 
     if (submitResult && submitResult.docRef) {
@@ -81,7 +80,6 @@ const submit = async () => {
 
       // Save the order data to the Pinia store
       orderStore.pushOrder(orderData);
-      console.log('push order : ', orderData);
 
       // Notify user with message
       notificationMsg.value = `Order created | sln : ${submitResult.sln}`;
