@@ -30,6 +30,14 @@ const editBtnEnabled = ref(false);
 // Introduce a flag to track saved changes in the modal
 const modalCloseWithoutSave = ref(false);
 
+// Create ref for search query
+const searchQuery = ref('');
+
+// computed filtered orders property checks continously for any chnages to the orders and filterOrders method written below
+const filteredOrders = computed(() => {
+    return orders.value.filter(order => order.customerName.toLowerCase().includes(searchQuery.value.toLowerCase()));
+});
+
 onMounted(() => {
   // Get orders from the Pinia store when the component is mounted
   orders.value = orderStore.getOrders();
@@ -266,6 +274,7 @@ const createPDF = (currentOrder) => {
             <div class="order-list-container">
                 <h5 class="order-list-heading">Order List</h5>
                 <figure>
+                    <input type="search" name="search" id="search" v-model="searchQuery">
                     <table role="grid">
                         <thead>
                             <tr>
@@ -282,7 +291,7 @@ const createPDF = (currentOrder) => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="order in orders" :key="order?.sln" class="order-item-row" @click="currentOrder = order; (isInvoiceButtonClicked ? modalIsOpen = false : modalIsOpen = true);">
+                            <tr v-for="order in filteredOrders" :key="order?.sln" class="order-item-row" @click="currentOrder = order; (isInvoiceButtonClicked ? modalIsOpen = false : modalIsOpen = true);">
                                 <td>{{ order?.sln }}</td>
                                 <td>{{ order?.customerName }}</td>
                                 <td>{{ order?.customerAddress }}</td>
@@ -613,7 +622,15 @@ hr {
     margin: 1rem 0;
 }
 
-@media (max-width: 350px) {
+#search {
+    max-width: fit-content;
+    display: block;
+    margin-left: auto;
+    margin-right: 0;
+}
+
+/* for mobile size */
+@media (min-width: 0px) and (max-width: 426px){
     .modal-info {
         display: inline-block;
         width: 100%;
@@ -633,9 +650,22 @@ hr {
     .item-details {
         display: block;
     }
+
+    #search {
+        max-width: 100%;
+        display: block;        
+    }
 }
 
-@media (max-width: 1024px) {
+/* for tablet size */
+@media (min-width: 427px) and (max-width: 768px) {
+    .grid button {
+        margin-top: 1.5rem;
+    }
+}
+
+/* for laptop and desktop size */
+@media (min-width: 769px) and (max-width: 1024px) {
     .grid button {
         margin-top: 1.5rem;
     }
