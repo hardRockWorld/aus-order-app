@@ -52,7 +52,7 @@ const router = createRouter({
         {
           // Specific order will be opened and served
           // /orders/order-list/current-order
-          path: "order-list/:current-order",
+          path: "order-list/:sln",
           name: "currentOrder",
           component: OrderList,
           meta: {
