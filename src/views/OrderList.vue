@@ -47,18 +47,14 @@ const filteredOrders = computed(() => {
 
 onMounted(() => {
     if (route.params.sln) {
-        console.log("This is the route params: ",route.params.sln);
         if (loggedIn) {
             // Get orders from the Pinia store when the component is mounted
             orders.value = orderStore.getOrders();
 
             if (route.params.sln) {
                 const slnFromURL = parseInt(route.params.sln);
-                console.log("sln url is: ", slnFromURL);
-                console.log("orders :", orders);
                 // Check if sln in URL matches the sln of any order
                 const orderWithMatchingSLN = orders.value.find(order => order.sln === slnFromURL);
-                console.log("order with matching sln is: ", orderWithMatchingSLN);
 
                 if (orderWithMatchingSLN) {
                     currentOrder.value = orderWithMatchingSLN;
@@ -160,20 +156,24 @@ const closeModal = () => {
     orders.value = orderStore.getOrders();
   }
 
-  // orderStore.saveOrders(orders.value);
+  orderStore.saveOrders(orders.value);
   currentOrder.value = null;
   modalIsOpen.value = false;
-  if (openedFromURL) {
-      router.push('/dashboard'); // Navigate only if opened from URL parameters
-  }
   editBtnEnabled.value = false;
   notification.value = {
-        success: true,
-        msg: ''
+    success: true,
+    msg: ''
   };
 
   itemTotalPrices.clear();
   modalCloseWithoutSave.value = false; // Reset the flag
+
+  if (openedFromURL && route.params.sln) {
+    orderStore.saveOrders(orders.value);
+    openedFromURL.value = false;
+    sessionStorage.setItem("dataFetched", "false");
+    router.push("/dashboard"); // Navigate only if opened from URL parameters
+  }
 }
 
 const addOrderItem = () => {
@@ -363,12 +363,12 @@ const createPDF = (currentOrder) => {
                 </label>
 
                 <label for="customer_address">
-                    Customer Name
+                    Customer Address
                     <input type="text" v-model="currentOrder.customerAddress" id="customer_address" name="customer_address" placeholder="Customer address" required>
                 </label>
 
                 <label for="date">Date</label>
-                <input type="date" v-model="currentOrder.orderDate" id="date" name="date" defaultItemNames placeholder="Date" required>
+                <input type="datetime-local" v-model="currentOrder.orderDate" id="date" name="date" defaultItemNames placeholder="Date" required>
 
                 <label for="salesman">Salesman</label>
                 <input type="text" v-model="currentOrder.salesman" id="salesman" name="salesman" placeholder="Salesman" required>
@@ -446,7 +446,7 @@ const createPDF = (currentOrder) => {
         </div>
         <div class="modal-info">
             <h6 class="sl-no">#SLN: {{ currentOrder?.sln }}</h6>
-            <h6 id="modal-date">Date: {{ currentOrder?.orderDate }}</h6>
+            <h6 id="modal-date">Date: {{ getFormattedDate(new Date(currentOrder?.orderDate), false) }}</h6>
         </div>
         <div class="item-details">
             <h6 class="cust-info">Customer Name: <span id="update-order-customer-name">{{ currentOrder?.customerName }}</span></h6>

@@ -287,16 +287,14 @@ watchEffect( () => {
 // });
 
 onMounted(async () => {
-  // Initialize chart on component mount
-  // this.updateChartData();
 
   // Check if the flag is present in sessionStorage
-  const dataFetched = sessionStorage.getItem('dataFetched');
-  if (!dataFetched) {
+  const dataFetched = sessionStorage.getItem("dataFetched");
+  if (dataFetched === "false" || !dataFetched) {
     // Fetch from db api
     await allOrders();
     updateOrdersData();
-    sessionStorage.setItem('dataFetched', 'true');
+    sessionStorage.setItem("dataFetched", "true");
   } else {
     // Get from session storage
     orders.value = orderStore.getOrders();
