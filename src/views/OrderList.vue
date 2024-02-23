@@ -1,5 +1,6 @@
 <script setup>
 import {ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import OrderItemRow from '@/components/OrderItemRow.vue';
@@ -14,6 +15,8 @@ import { getFormattedDate } from '@/util/util';
 // Initialize the session store here
 const sessionStore = useSessionStore();
 const orderStore = useOrderStore();
+const route = useRoute();
+const router = useRouter();
 
 const notification = ref({
     success: true,
@@ -23,9 +26,13 @@ const notification = ref({
 const orders = ref([]);
 const currentOrder = ref(null);
 const modalIsOpen = ref(false);
+const openedFromURL = ref(false);
 const isInvoiceButtonClicked = ref(false);
 const isLoading = ref(false);
 const editBtnEnabled = ref(false);
+
+// Check if the user is logged in
+const loggedIn = computed(() => sessionStore.getUser() !== null);
 
 // Introduce a flag to track saved changes in the modal
 const modalCloseWithoutSave = ref(false);
@@ -39,8 +46,31 @@ const filteredOrders = computed(() => {
 });
 
 onMounted(() => {
-  // Get orders from the Pinia store when the component is mounted
-  orders.value = orderStore.getOrders();
+    if (route.params.sln) {
+        console.log("This is the route params: ",route.params.sln);
+        if (loggedIn) {
+            // Get orders from the Pinia store when the component is mounted
+            orders.value = orderStore.getOrders();
+
+            if (route.params.sln) {
+                const slnFromURL = parseInt(route.params.sln);
+                console.log("sln url is: ", slnFromURL);
+                console.log("orders :", orders);
+                // Check if sln in URL matches the sln of any order
+                const orderWithMatchingSLN = orders.value.find(order => order.sln === slnFromURL);
+                console.log("order with matching sln is: ", orderWithMatchingSLN);
+
+                if (orderWithMatchingSLN) {
+                    currentOrder.value = orderWithMatchingSLN;
+                    modalIsOpen.value = true;
+                    openedFromURL.value = true; // Set to true when opened from URL parameters
+                }
+            }
+        }
+    }
+
+    // Get orders from the Pinia store when the component is mounted
+    orders.value = orderStore.getOrders();
 });
 
 onUnmounted(() => {
@@ -133,6 +163,9 @@ const closeModal = () => {
   // orderStore.saveOrders(orders.value);
   currentOrder.value = null;
   modalIsOpen.value = false;
+  if (openedFromURL) {
+      router.push('/dashboard'); // Navigate only if opened from URL parameters
+  }
   editBtnEnabled.value = false;
   notification.value = {
         success: true,
