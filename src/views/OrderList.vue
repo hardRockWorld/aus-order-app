@@ -34,6 +34,7 @@ const editBtnEnabled = ref(false);
 // Pagination
 const currentPage = ref(1);
 const ordersPerPage = 5;
+const totalPages = ref(1);
 
 // Check if the user is logged in
 const loggedIn = computed(() => sessionStore.getUser() !== null);
@@ -46,20 +47,19 @@ const searchQuery = ref("");
 
 // computed filtered orders property checks continously for any chnages to the orders and filterOrders method written below
 const filteredOrders = computed(() => {
+  const filtered = orders.value.filter((order) =>
+    order.customerName.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+
+  // Update total pages based on filtered orders
+  totalPages.value = Math.ceil(filtered.length / ordersPerPage);
+  currentPage.value = totalPages.value < currentPage.value ? 1 : currentPage.value;
+
+  // Return orders for the current page
   const startIndex = (currentPage.value - 1) * ordersPerPage;
   const endIndex = currentPage.value * ordersPerPage;
-  const ordersOnCurrentPage = orders.value.slice(startIndex, endIndex);
-  return ordersOnCurrentPage.value
-    .filter((order) =>
-      order.customerName.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
-    .slice(startIndex, endIndex);
+  return filtered.slice(startIndex, endIndex);
 });
-
-// Total number of pages
-const totalPages = computed(() =>
-  Math.ceil(orders.value.length / ordersPerPage)
-);
 
 // Function to go to the next page
 const nextPage = () => {
@@ -82,7 +82,7 @@ const goToPage = (pageNumber) => {
   }
 };
 
-// Calculate the pagination array dynamically
+// Calculate the pagination array dynamically based on filtered orders
 const pagination = computed(() => {
   const startPage = Math.max(1, currentPage.value - 2);
   const endPage = Math.min(totalPages.value, startPage + 4);
@@ -91,6 +91,13 @@ const pagination = computed(() => {
     pages.push(i);
   }
   return pages;
+});
+
+// Watch for changes in the filtered orders and update the current page if necessary
+watch(filteredOrders, () => {
+  if (currentPage.value > totalPages.value) {
+    currentPage.value = Math.max(1, totalPages.value); // Set current page to the maximum page number of filtered orders
+  }
 });
 
 onMounted(() => {
@@ -448,10 +455,10 @@ const createPDF = (currentOrder) => {
     <div class="pagination">
       <button @click="prevPage" :disabled="currentPage === 1">Previous</button>
       <!-- Show ellipsis if currentPage is greater than 3 -->
-      <template v-if="currentPage > 3">
+      <template class="pagination-ellipsis" v-if="currentPage > 3">
         <span>...</span>
       </template>
-      <template v-for="page in pagination" :key="page">
+      <template class="pagination-pages" v-for="page in pagination" :key="page">
         <button
           @click="goToPage(page)"
           :class="{ active: page === currentPage }"
@@ -460,7 +467,7 @@ const createPDF = (currentOrder) => {
         </button>
       </template>
       <!-- Show ellipsis if currentPage is less than totalPages - 2 -->
-      <template v-if="currentPage < totalPages - 2">
+      <template class="pagination-ellipsis" v-if="currentPage < totalPages - 2">
         <span>...</span>
       </template>
       <button @click="nextPage" :disabled="currentPage === totalPages">
@@ -889,6 +896,58 @@ hr {
   margin-right: 0;
 }
 
+/* Pagination style */
+.pagination {
+  display: flex;
+  justify-content:space-around;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.pagination-list {
+  display: flex;
+  list-style-type: none;
+  padding: 0;
+  margin: 0 10px;
+}
+
+.pagination-list li {
+  margin: 0 5px;
+}
+
+.pagination-list button {
+  padding: 5px 10px;
+  border: none;
+  background-color: #f0f0f0;
+  cursor: pointer;
+}
+
+.pagination-list button.active {
+  background-color: #4caf50;
+  color: white;
+}
+
+.pagination-list span {
+  margin: 0 10px;
+  padding: 5px 10px;
+}
+
+.pagination button {
+  border: none;
+  cursor: pointer;
+  margin: 0 10px;
+  padding: 5px 10px;
+}
+
+.pagination button:hover {
+  background-color: #ddd;
+}
+
+.pagination button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* for mobile size */
 @media (min-width: 0px) and (max-width: 426px) {
   .modal-info {
@@ -915,19 +974,73 @@ hr {
     max-width: 100%;
     display: block;
   }
+
+  .pagination {
+    flex-direction: column; /* Stack pagination items vertically */
+    align-content: center;
+    align-items: center; /* Center items horizontally */
+    width: 60%;
+    margin: auto;
+  }
+
+  .pagination > button {
+    border: none;
+    margin: 10px 0; /* Add vertical spacing between buttons and ellipsis */
+    padding: 5px 0;
+  }
+
+  .pagination-ellipsis {
+    margin: 5px 0; /* Add margin to the ellipsis */
+  }
+}
+
+/* for 426px to 600px size */
+@media (min-width: 426px) and (max-width: 600px) {
+  .grid button {
+    margin-top: 1.5rem;
+  }
+
+  .pagination {
+    flex-direction: row; /* Stack pagination items vertically */
+    justify-content: center;
+    align-items: center; /* Center items horizontally */
+    width: 50%;
+    margin: auto;
+  }
+
+  .pagination > button {
+    margin: 5px; /* Add space around the buttons and ellipsis */
+  }
 }
 
 /* for tablet size */
-@media (min-width: 427px) and (max-width: 768px) {
+@media (min-width: 601px) and (max-width: 768px) {
   .grid button {
     margin-top: 1.5rem;
+  }
+
+  .pagination {
+    justify-content: space-between; /* Center pagination items */
+  }
+
+  .pagination button {
+    margin: 5px; /* Add space around the buttons and ellipsis */
   }
 }
 
 /* for laptop and desktop size */
-@media (min-width: 769px) and (max-width: 1024px) {
+@media (min-width: 768px) and (max-width: 1024px) {
   .grid button {
     margin-top: 1.5rem;
+  }
+
+  .pagination {
+    justify-content: center; /* Center pagination items */
+  }
+
+  .pagination button,
+  .pagination span {
+    margin: 10px; /* Adjust spacing around the buttons and ellipsis */
   }
 }
 
