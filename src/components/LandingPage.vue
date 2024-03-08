@@ -27,7 +27,7 @@ proxyIsLoggedIn.value = currentUser.isLoggedIn;
 }
 
 .links {
-  display: inline-flex;
+  display: flex;
   justify-content: space-evenly;
   width: 100%;
   margin-bottom: 2rem;
@@ -39,23 +39,20 @@ proxyIsLoggedIn.value = currentUser.isLoggedIn;
   cursor: pointer;
   transition: background-color 0.3s ease;
   color: #FFFFFF;
+  border: 1px solid transparent;
 }
 
 .tab-link.router-link-exact-active {
   background-color: var(--primary);
   color: var(--primary-inverse);
+  border-color: var(--primary);
+  font-weight: bold;
+  outline: none;
 }
 
-/* Responsive styles */
-@media (min-width: 600px) {
-  .links {
-    width: 75%;
-  }
-}
-
-@media (min-width: 900px) {
-  .links {
-    width: 50%;
-  }
+/* Add styles for inactive tabs */
+.tab-link:not(.router-link-exact-active) {
+  background-color: #f0f0f0;
+  color: #333;
 }
 </style>
