@@ -180,7 +180,11 @@ const getStartDate = () => {
       break;
     case 'today':
     default:
-      timeInterval = today.getTime() - 24 * 60 * 60 * 1000;
+      
+      today.setHours(0, 0, 0, 0); // Set time to 00:00:00
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1); // Set to yesterday
+      timeInterval = yesterday.getTime(); // Start from yesterday 12 AM
       title = 'Orders Today';
       xaxis = [
         '12AM', '1AM', '2AM', '3AM', '4AM', '5AM', '6AM', '7AM', '8AM', '9AM', '10AM', '11AM',
