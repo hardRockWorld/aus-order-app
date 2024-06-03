@@ -141,7 +141,7 @@ dist
 .firebaserc
 firebase.json
 firestore.indexes.json
-firestore.rules
+#firestore.rules
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
