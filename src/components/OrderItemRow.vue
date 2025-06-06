@@ -171,20 +171,139 @@ defineExpose({
   text-decoration: line-through;
 }
 
-.currency-wrap{
-    position:relative;
+.currency-wrap {
+    position: relative;
 }
 
-.currency-code{
-    position:absolute;
-    left:8px;
-    top:16px;
+.currency-code {
+    position: absolute;
+    left: 8px;
+    top: 16px;
 }
 
-.text-currency{
-    padding:10px 20px;
-    border:solid 1px #ccc;
-    border-radius:5px;
+.text-currency {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid #0a3d0a !important;
+    background-color: var(--background-color) !important;
+    color: #0a3d0a;
 }
 
+/* Add consistent styling for all inputs */
+input, select, textarea {
+    background-color: var(--background-color) !important;
+    border: 1px solid #0a3d0a !important;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    color: #0a3d0a;
+}
+
+input:hover, select:hover, textarea:hover {
+    border-color: #156315 !important;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #156315 !important;
+    box-shadow: 0 0 0 2px rgba(10, 61, 10, 0.1);
+}
+
+input[readonly] {
+    background-color: #e9e9e9 !important;
+    cursor: not-allowed;
+}
+
+/* Adjust the currency input specifically */
+input.text-currency {
+    padding-left: 25px;
+}
+
+input, select {
+    color: #0a3d0a;
+}
+
+input::placeholder {
+    color: var(--placeholder-color) !important;
+    opacity: 0.7;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background-color: #1e1e1e !important;
+    color: #ffffff !important;
+    border-color: #404040 !important;
+}
+
+[data-theme="dark"] input:hover,
+[data-theme="dark"] select:hover,
+[data-theme="dark"] textarea:hover {
+    border-color: #606060 !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+    border-color: #808080 !important;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] input[readonly] {
+    background-color: #2a2a2a !important;
+    color: #888888 !important;
+}
+
+[data-theme="dark"] input::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+[data-theme="dark"] select option {
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+[data-theme="dark"] label {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .sln {
+    color: #d4af37 !important;
+}
+
+[data-theme="dark"] .text-currency {
+    background-color: #1e1e1e !important;
+    color: #ffffff !important;
+    border-color: #404040 !important;
+}
+
+[data-theme="dark"] .currency-code {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .red {
+    color: #ff6b6b !important;
+}
+
+[data-theme="dark"] .green {
+    color: #51cf66 !important;
+}
+
+[data-theme="dark"] button.secondary:hover {
+    color: #0a3d0a !important;
+    background-color: #ffffff !important;
+    border-color: #0a3d0a !important;
+}
+
+[data-theme="dark"] button.submit:hover,
+[data-theme="dark"] button[type="submit"]:hover,
+[data-theme="dark"] button.primary:hover {
+    color: #0a3d0a !important;
+    background-color: #ffffff !important;
+    border-color: #0a3d0a !important;
+}
+
+[data-theme="dark"] .danger {
+    color: #ff6b6b !important;
+}
 </style>

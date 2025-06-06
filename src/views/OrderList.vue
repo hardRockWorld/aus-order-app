@@ -392,6 +392,8 @@ const createPDF = (currentOrder) => {
             name="search"
             id="search"
             v-model="searchQuery"
+            placeholder="Search"
+            aria-label="Search"
           />
           <table role="grid">
             <thead>
@@ -750,6 +752,12 @@ const createPDF = (currentOrder) => {
 </template>
 
 <style scoped>
+.order-list-container {
+  background-color: var(--background-color);
+  padding: 20px;
+  border-radius: 12px;
+}
+
 .order-list-heading {
   font-size: 1.4rem;
   font-weight: bold;
@@ -759,6 +767,8 @@ const createPDF = (currentOrder) => {
   margin-top: auto;
   padding-top: 1rem;
   width: 800px;
+  background-color: var(--background-color);
+  border-radius: 12px;
 }
 
 .update-order-form {
@@ -792,7 +802,7 @@ const createPDF = (currentOrder) => {
   border-radius: 5px;
   padding: 1rem;
   margin-bottom: 1rem;
-
+  background-color: var(--background-color);
   filter: alpha(opacity=80);
   -moz-opacity: 0.8;
   opacity: 0.8;
@@ -817,20 +827,20 @@ button:not(.disabled) {
   text-align: center;
   text-decoration: none;
   outline: none;
-  color: #000000;
-  background-color: var(--primary);
+  color: #ffffff !important;
+  background-color: var(--primary) !important;
   border: none;
   border-radius: 5px;
-  box-shadow: 0 5px #999;
+  transition: all 0.3s ease;
 }
 
 #invoice-btn:hover {
-  background-color: #ffa500;
+  background-color: var(--primary-hover) !important;
+  transform: translateY(-2px);
 }
 
 #invoice-btn:active {
-  background-color: #ddd;
-  transform: translateY(2px);
+  transform: translateY(1px);
 }
 
 .red {
@@ -892,8 +902,79 @@ hr {
 #search {
   max-width: fit-content;
   display: block;
-  margin-left: auto;
-  margin-right: 0;
+  margin: 0 0 20px auto;
+  padding: 8px 12px;
+  background-color: var(--background-color);
+  border: 1px solid rgba(10, 61, 10, 0.2);
+  border-radius: 8px;
+  font-size: 14px;
+  color: #0a3d0a;
+  transition: all 0.3s ease;
+  width: 200px;
+  text-align: left;
+  box-shadow: 0 2px 4px rgba(10, 61, 10, 0.05);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: none;
+}
+
+/* Hide the default search cancel button in webkit browsers */
+#search::-webkit-search-cancel-button,
+#search::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#search:hover {
+  border-color: #0a3d0a;
+  box-shadow: 0 2px 6px rgba(10, 61, 10, 0.1);
+}
+
+#search:focus {
+  outline: none;
+  border-color: #0a3d0a;
+  text-align: left;
+  box-shadow: 0 0 0 2px rgba(10, 61, 10, 0.1);
+}
+
+#search::placeholder {
+  color: rgba(21, 99, 21, 0.4);
+  text-align: center;
+  transition: opacity 0.2s ease;
+  opacity: 1;
+}
+
+#search:focus::placeholder {
+  text-align: left;
+}
+
+#search:focus::placeholder {
+  opacity: 0;
+}
+
+#search:hover {
+  border-color: #156315;
+}
+
+/* Search box dark mode styles */
+[data-theme="dark"] #search {
+  background-color: #1e1e1e !important;
+  color: #ffffff !important;
+  border-color: #404040;
+}
+
+[data-theme="dark"] #search::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+[data-theme="dark"] #search:hover {
+  border-color: #606060;
+  box-shadow: 0 2px 6px rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] #search:focus {
+  border-color: #808080;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
 
 /* Pagination style */
@@ -911,15 +992,16 @@ hr {
   margin: 0 10px;
 }
 
-.pagination-list li {
-  margin: 0 5px;
-}
-
 .pagination-list button {
   padding: 5px 10px;
   border: none;
-  background-color: #f0f0f0;
+  background-color: var(--background-color);
+  border: 1px solid #ddd;
   cursor: pointer;
+}
+
+.pagination-list button:hover {
+  background-color: #e9e9e9;
 }
 
 .pagination-list button.active {
@@ -946,6 +1028,33 @@ hr {
 .pagination button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Dark mode pagination styles */
+[data-theme="dark"] .pagination button,
+[data-theme="dark"] .pagination span {
+  color: #ffffff !important;
+  background-color: #1e1e1e;
+  border: 1px solid #d4af37;
+}
+
+[data-theme="dark"] .pagination button:hover:not(:disabled) {
+  background-color: #d4af37;
+  color: #1e1e1e !important;
+  border-color: #d4af37;
+}
+
+[data-theme="dark"] .pagination button.active {
+  background-color: #d4af37;
+  color: #1e1e1e !important;
+  border-color: #d4af37;
+}
+
+[data-theme="dark"] .pagination button:disabled {
+  opacity: 0.6;
+  color: #606060 !important;
+  border-color: #404040;
+  background-color: #1e1e1e;
 }
 
 /* for mobile size */
@@ -1046,5 +1155,210 @@ hr {
 
 .order-details-notification {
   margin-top: 2rem;
+}
+
+.orders-container {
+  color: #072907;
+  padding: 24px;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #072907;
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+}
+
+.search-container {
+  margin-bottom: 20px;
+}
+
+.search-container input {
+  color: #072907;
+  font-weight: 500;
+}
+
+.table-header th {
+  color: #0a3d0a !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.table-row td {
+  color: #072907;
+}
+
+.customer-name {
+  font-weight: 600;
+  color: #0a3d0a;
+}
+
+.customer-address {
+  color: #2d4d2d;
+}
+
+.status-badge {
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.status-badge.placed {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+
+.status-badge.recieved {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.action-buttons button {
+  font-weight: 600;
+}
+
+.pagination {
+  color: #072907;
+  font-weight: 500;
+}
+
+.modal-title {
+  color: #072907;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.modal-body label {
+  color: #0a3d0a;
+  font-weight: 600;
+}
+
+.notification {
+  font-weight: 600;
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] table tbody td,
+[data-theme="dark"] table thead th {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .order-list-heading,
+[data-theme="dark"] .sl-no,
+[data-theme="dark"] .cust-info,
+[data-theme="dark"] #update-order-customer-name,
+[data-theme="dark"] .order-item-list li {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: #2a2a2a !important;
+  color: #ffffff !important;
+  border-color: #404040 !important;
+}
+
+[data-theme="dark"] .order-item-container {
+  background-color: #2a2a2a;
+}
+
+[data-theme="dark"] .update-order-modal {
+  background-color: #1e1e1e;
+  color: #ffffff;
+  border: 1px solid #404040;
+}
+
+[data-theme="dark"] .update-order-form {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .update-order-form label,
+[data-theme="dark"] .item-details label,
+[data-theme="dark"] fieldset legend {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .modal-info {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .item-details {
+  color: #ffffff;
+}
+
+[data-theme="dark"] code {
+  background-color: #2a2a2a;
+  color: #ffffff;
+}
+
+[data-theme="dark"] h6 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .notification.green {
+  color: #8ce3b0 !important;
+}
+
+[data-theme="dark"] .notification.red,
+[data-theme="dark"] .notification.failed {
+  color: #ff6b6b !important;
+}
+
+[data-theme="dark"] .notification.success {
+  color: #8ce3b0 !important;
+}
+
+[data-theme="dark"] fieldset {
+  border-color: #404040 !important;
+}
+
+[data-theme="dark"] button.primary {
+  background-color: #d4af37 !important;
+  color: #1e1e1e !important;
+  border-color: #d4af37 !important;
+}
+
+[data-theme="dark"] button.primary:hover {
+  background-color: #e5c250 !important;
+  color: #1e1e1e !important;
+}
+
+[data-theme="dark"] button.primary:disabled {
+  background-color: #5a4a18 !important;
+  color: #aaaaaa !important;
+  border-color: #5a4a18 !important;
+  opacity: 0.7;
+}
+
+[data-theme="dark"] button.secondary {
+  background-color: #2a2a2a !important;
+  color: #ffffff !important;
+  border-color: #404040 !important;
+}
+
+[data-theme="dark"] button.secondary:hover {
+  background-color: #3a3a3a !important;
+  border-color: #505050 !important;
+}
+
+[data-theme="dark"] footer {
+  background-color: #1e1e1e !important;
+  border-top: 1px solid #404040;
+  padding-top: 10px;
+}
+
+[data-theme="dark"] footer .grid {
+  background-color: #1e1e1e !important;
+}
+
+[data-theme="dark"] hr {
+  border-color: #404040;
+  background-color: #404040;
+  opacity: 0.5;
 }
 </style>

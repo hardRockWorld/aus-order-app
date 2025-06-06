@@ -37,22 +37,28 @@ proxyIsLoggedIn.value = currentUser.isLoggedIn;
   text-decoration: none;
   padding: .5rem 1rem;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  color: #FFFFFF;
+  transition: all 0.2s ease;
+  color: #072907;
   border: 1px solid transparent;
 }
 
+.tab-link:hover {
+  background-color: rgba(10, 61, 10, 0.1);
+  border-color: #072907;
+}
+
 .tab-link.router-link-exact-active {
-  background-color: var(--primary);
-  color: var(--primary-inverse);
-  border-color: var(--primary);
+  background-color: #0a3d0a;
+  color: #ffffff;
+  border-color: #0a3d0a;
   font-weight: bold;
   outline: none;
 }
 
 /* Add styles for inactive tabs */
 .tab-link:not(.router-link-exact-active) {
-  background-color: #f0f0f0;
-  color: #333;
+  background-color: #f5f5f5;
+  color: #072907;
+  border: 1px solid #0a3d0a;
 }
 </style>

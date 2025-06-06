@@ -1,19 +1,33 @@
 <script setup>
 // import the necessary modules from v-chart
-import {ref, watch, onMounted, provide, computed } from 'vue';
+import {ref, watch, onMounted, provide, computed, nextTick } from 'vue';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from "echarts/renderers";
-import { LineChart, BarChart } from 'echarts/charts';
-import { TitleComponent, TooltipComponent, LegendComponent, GridComponent } from 'echarts/components';
+import { LineChart, BarChart, PieChart } from 'echarts/charts';
+import { 
+  TitleComponent, 
+  TooltipComponent, 
+  LegendComponent, 
+  GridComponent,
+  ToolboxComponent,
+  DataZoomComponent,
+  GraphicComponent
+} from 'echarts/components';
 import VChart, { THEME_KEY } from 'vue-echarts';
 import 'echarts';
 
 import { useSessionStore } from "@/stores/userSessionStore";
 import { useOrderStore } from "@/stores/orderSessionStore";
+import { useThemeStore } from "@/stores/themeStore";
 
+const chartRef = ref(null);
+const isLoading = ref(true);
 const sessionStore = useSessionStore();
 const orderStore = useOrderStore();
+const themeStore = useThemeStore();
+const currentTheme = computed(() => themeStore.isDark);
 
+// Props definition
 const props = defineProps({
   allData: {
     type: Array,
@@ -27,218 +41,226 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-//   pendingData: {
-//     type: Array,
-//     required: true,
-//   },
-//   paymentData: {
-//     type: Array,
-//     required: true,
-//   },
   selectedInterval: {
     type: String,
     required: true,
-  },
+  }
 });
-
-// Define the props here
-const allData = props.allData;
-const chartTitle = props.chartTitle;
-const xAxisData = props.xAxisData;
-const selectedInterval = props.selectedInterval;
 
 use([
   CanvasRenderer,
   LineChart,
   BarChart,
+  PieChart,
   TitleComponent,
   TooltipComponent,
   LegendComponent,
-  GridComponent
+  GridComponent,
+  ToolboxComponent,
+  DataZoomComponent,
+  GraphicComponent
 ]);
 
-provide(THEME_KEY, "dark");
+provide(THEME_KEY, "light");
 
-const chartOptions = ref({});
-const chartRef = ref(null);
-const thisMonth = new Date().getMonth()+1;
-const getMonthName = (offset) => {
-  const date = new Date(Date.UTC(2000, thisMonth - offset - 1, 1));
-  return date.toLocaleString('en', { month: 'long' });
-};
-const thisYear = new Date().getFullYear()+1900;
-
-watch(props, (newProps) => {
-  chartOptions.value = {
-    // Options for weekly chart
-    title: { text: newProps.chartTitle },
-    xAxis: { data: newProps.xAxisData },
-    yAxis: { type: 'value' },
-    chartWidth: "100%",
-    chartHeight: "550px",
-    series: [
-      {
-        data: newProps.allData, // Example data for week
-        type: 'bar',
-      },
-    ],
-  };
-});
-
-// Watch the selected interval value and make the chart options accordingly
-watch(
-    () => selectedInterval,
-    (newInterval) => {
-      switch (newInterval) {
-        case 'weekly':
-          chartOptions.value = {
-            // Options for weekly chart
-            title: { text: chartTitle },
-            xAxis: { data: xAxisData },
-            yAxis: { type: 'value' },
-            chartWidth: "100%",
-            chartHeight: "550px",
-            series: [
-              {
-                data: allData, // Example data for week
-                type: 'bar',
-              },
-            ],
-          };
-          break;
-          // Add cases for other intervals as needed
-        case 'monthly':
-          chartOptions.value = {
-            // Options for monthly chart
-            title: { text: chartTitle },
-            xAxis: { data: xAxisData },
-            yAxis: { type: 'value' },
-            chartWidth: "100%",
-            chartHeight: "550px",
-            series: [
-              {
-                data: allData, // Example data for week
-                type: 'bar',
-              },
-            ],
-          };
-          break;
-        case 'quarterly':
-          chartOptions.value = {
-            // Options for quarterly chart
-            title: { text: chartTitle },
-            xAxis: { data: xAxisData },
-            yAxis: { type: 'value' },
-            chartWidth: "100%",
-            chartHeight: "550px",
-            series: [
-              {
-                data: allData, // Example data for week
-                type: 'bar',
-              },
-            ],
-          };
-          break;
-        case 'halfYearly':
-          chartOptions.value = {
-            // Options for halfYearly chart
-            title: { text: chartTitle },
-            xAxis: { data: xAxisData },
-            yAxis: { type: 'value' },
-            chartWidth: "100%",
-            chartHeight: "550px",
-            series: [
-              {
-                data: allData, // Example data for week
-                type: 'bar',
-              },
-            ],
-          };
-          break;
-        case 'yearly':
-          chartOptions.value = {
-            // Options for yearly chart
-            title: { text: chartTitle },
-            xAxis: { data: xAxisData },
-            yAxis: { type: 'value' },
-            chartWidth: "100%",
-            chartHeight: "550px",
-            series: [
-              {
-                data: allData, // Example data for week
-                type: 'bar',
-              },
-            ],
-          };
-          break;
-        case 'all':
-          chartOptions.value = {
-            // Options for All chart
-            title: { text: chartTitle },
-            xAxis: { data: xAxisData },
-            yAxis: { type: 'value' },
-            chartWidth: "100%",
-            chartHeight: "550px",
-            series: [
-              {
-                data: allData, // Example data for week
-                type: 'bar',
-              },
-            ],
-          };
-          break;
-        default:
-          chartOptions.value = {
-              // Options for today's chart
-              title: { text: chartTitle },
-              xAxis: { data: xAxisData },
-              yAxis: { type: 'value' },
-              chartWidth: "100%",
-              chartHeight: "550px",
-              series: [
-                {
-                  data: allData, // Example data for today
-                  type: 'bar',
-                },
-              ],
-            };
+// Single computed property for chart options
+const chartOptions = computed(() => ({
+  title: {
+    text: props.chartTitle,
+    textStyle: {
+      fontSize: 16,
+      fontWeight: 600,
+      color: currentTheme.value ? '#ffffff' : '#333333'
+    },
+    left: 'center'
+  },
+  tooltip: {
+    trigger: 'axis',
+    backgroundColor: currentTheme.value ? '#2a2a2a' : '#ffffff',
+    borderColor: currentTheme.value ? '#404040' : '#d1d5db',
+    textStyle: {
+      color: currentTheme.value ? '#ffffff' : '#333333'
+    }
+  },
+  xAxis: {
+    type: 'category',
+    data: props.xAxisData,
+    axisLabel: {
+      color: currentTheme.value ? '#ffffff' : '#333333',
+      rotate: props.xAxisData.length > 12 ? 45 : 0,
+      interval: props.xAxisData.length > 24 ? 'auto' : 0
+    },
+    axisLine: {
+      lineStyle: {
+        color: currentTheme.value ? '#404040' : '#666666'
+      }
+    }
+  },
+  yAxis: {
+    type: 'value',
+    axisLabel: {
+      color: currentTheme.value ? '#ffffff' : '#333333'
+    },
+    axisLine: {
+      lineStyle: {
+        color: currentTheme.value ? '#404040' : '#666666'
       }
     },
-    { immediate: true }
+    splitLine: {
+      lineStyle: {
+        color: currentTheme.value ? '#333333' : '#e6e6e6'
+      }
+    }
+  },
+  grid: {
+    left: '3%',
+    right: '4%',
+    bottom: '8%',
+    top: '15%',
+    containLabel: true
+  },
+  toolbox: {
+    feature: {
+      saveAsImage: { title: 'Save' },
+      dataZoom: {},
+      restore: {}
+    },
+    right: '20px'
+  },
+  dataZoom: [{
+    type: 'inside',
+    start: 0,
+    end: 100
+  }],
+  series: [{
+    data: props.allData,
+    type: props.selectedInterval === 'quarterly' ||
+          props.selectedInterval === 'halfYearly' ||
+          props.selectedInterval === 'yearly' ||
+          props.selectedInterval === 'all' ? 'line' : 'bar',
+    barWidth: '60%',
+    smooth: true,
+    itemStyle: {
+      color: currentTheme.value ? '#36a836' : '#1a5d1a',
+      borderRadius: [4, 4, 0, 0]
+    },
+    emphasis: {
+      itemStyle: {
+        color: currentTheme.value ? '#4cd94c' : '#2d8a2d'
+      }
+    }
+  }]
+}));
+
+// Single watcher for all reactive dependencies
+watch([currentTheme, () => props.allData, () => props.chartTitle, () => props.xAxisData, () => props.selectedInterval],
+  () => {
+    if (chartRef.value) {
+      nextTick(() => {
+        chartRef.value.setOption(chartOptions.value);
+      });
+    }
+  },
+  { immediate: true }
 );
 
-// OnMounted code
 onMounted(() => {
-  // Set chart options here after the component is mounted
-  chartRef.value.setOption(chartOptions.value);
+  nextTick(() => {
+    if (chartRef.value) {
+      chartRef.value.setOption(chartOptions.value);
+    }
+  });
+  setTimeout(() => {
+    isLoading.value = false;
+  }, 800);
 });
-
-// Use watch to wait for changes in chartOptions
-watch(chartOptions, () => {
-  // Update the chart when chartOptions change
-  if (chartRef.value) {
-    chartRef.value.setOption(chartOptions.value);
-  }
-});
-
-// Use a flag to check if the DOM is fully loaded
-const isDOMLoaded = ref(false);
-
-// Use a callback for window.onload to set the flag
-window.onload = () => {
-  isDOMLoaded.value = true;
-};
 </script>
 
 <template>
-  <div>
-    <v-chart ref="chartRef" class="chart-render" :option="chartOptions" :autoresize="true" />
+  <div class="chart-container">
+    <div v-if="isLoading" class="chart-loading">
+      <div class="loader"></div>
+      <p>Loading chart data...</p>
+    </div>
+    <v-chart 
+      ref="chartRef" 
+      class="chart-render" 
+      :class="{ 'is-loading': isLoading }" 
+      :option="chartOptions" 
+      :autoresize="true" 
+    />
   </div>
 </template>
 
 <style scoped>
+.chart-container {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
 .chart-render {
-  width: 800px;
-  height: 500px;
+  width: 100%;
+  height: 400px;
+  border-radius: 8px;
+  transition: opacity 0.3s ease;
+}
+
+.chart-render.is-loading {
+  opacity: 0.5;
+}
+
+.chart-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--background-color);
+  opacity: 0.8;
+  z-index: 10;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] .chart-loading {
+  background-color: rgba(30, 30, 30, 0.8);
+}
+
+[data-theme="dark"] .chart-loading p {
+  color: #ffffff;
+}
+
+.chart-loading p {
+  margin-top: 16px;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.loader {
+  border: 3px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 3px solid #3498db;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .chart-render {
+    height: 300px;
+  }
 }
 </style>

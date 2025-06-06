@@ -144,4 +144,41 @@ label {
   font-weight: bold;
   margin-bottom: 1rem;
 }
+
+select {
+  background-color: var(--background-color);
+  border: 1px solid #0a3d0a;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #072907;
+  cursor: pointer;
+  margin-left: 1rem;
+}
+
+select:focus {
+  outline: none;
+  border-color: #072907;
+  box-shadow: 0 0 0 2px rgba(10, 61, 10, 0.1);
+}
+
+[data-theme="dark"] label {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] select {
+  background-color: #1e1e1e !important;
+  color: #ffffff !important;
+  border-color: #404040 !important;
+}
+
+[data-theme="dark"] select:focus {
+  border-color: #606060 !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] option {
+  background-color: #1e1e1e;
+  color: #ffffff;
+}
 </style>

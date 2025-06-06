@@ -1,86 +1,155 @@
 <template>
   <div class="dashboard">
-    <div class="time-interval">
-      <label for="timeInterval">Select Time Interval:</label>
-      <select v-model="selectedInterval">
-        <option value="today">Today</option>
-        <option value="weekly">Weekly</option>
-        <option value="monthly">Monthly</option>
-        <option value="quarterly">Quarterly</option>
-        <option value="halfYearly">Half-Yearly</option>
-        <option value="yearly">Yearly</option>
-        <option value="all">All</option>
-      </select>
-    </div>
-    <div class="box-container grid-group">
-      <div class="recent-orders grid">
-        <div class="list box">
-          <h6>Recent Orders</h6>
-          <ul>
-            <li v-for="order in recentOrders" :key="order.sln">
-                <router-link :to="{ name: 'currentOrder', params: { sln: order.sln } }">
-                    <p>{{order.customerName}} || {{order.customerAddress}} || <span>{{getFormattedDate(new Date(order.orderDate), false)}}</span></p>
-                </router-link>
-            </li>
-          </ul>
-        </div>
-      </div>
-      <div class="pending-orders grid">
-        <div class="list box">
-          <h6>Pending Orders ({{pendingOrdersLength}})</h6>
-          <ul>
-            <li v-for="order in pendingOrders" :key="order.sln">
-                <router-link :to="{ name: 'currentOrder', params: { sln: order.sln } }">
-                    <p>{{order.customerName}} || {{order.customerAddress}} || <span>{{getFormattedDate(new Date(order.orderDate), false)}}</span></p>
-                </router-link>
-            </li>
-          </ul>
-        </div>
-      </div>
-      <div class="last-payment-details grid">
-        <div class="list box">
-          <h6>Last Payment Details ({{lastPaymentDetailsLength}})</h6>
-          <ul>
-            <li v-for="order in lastPaymentDetails" :key="order.sln">
-                <router-link :to="{ name: 'currentOrder', params: { sln: order.sln } }">
-                    <p>{{order.customerName}} || {{order.customerAddress}} || <span>{{getFormattedDate(new Date(order.orderDate), false)}}</span> || <span>{{order.status}}</span></p>
-                </router-link>
-            </li>
-          </ul>
-        </div>
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Orders Dashboard</h1>
+      <div class="time-interval">
+        <label for="timeInterval">Time Period:</label>
+        <select id="timeInterval" v-model="selectedInterval">
+          <option value="today">Today</option>
+          <option value="weekly">This Week</option>
+          <option value="monthly">This Month</option>
+          <option value="quarterly">This Quarter</option>
+          <option value="halfYearly">Last 6 Months</option>
+          <option value="yearly">This Year</option>
+          <option value="all">All Time</option>
+        </select>
       </div>
     </div>
 
-    <div class="charts-container grid-group">
-      <div class="recent-orders grid">
-        <div class="chart box">
-          <charts :allData="chartData" :chartTitle="chartTitle" :xAxisData="xAxis" :selectedInterval="selectedInterval" />
+    <!-- KPI Summary Cards -->
+    <div class="metrics-container">
+      <div class="metric-card">
+        <h3 class="metric-title">Total Orders</h3>
+        <div class="metric-value">{{ orders.length }}</div>
+        <div class="metric-change">
+          <span v-if="orderGrowth > 0" class="positive">↑ {{ orderGrowth }}%</span>
+          <span v-else-if="orderGrowth < 0" class="negative">↓ {{ Math.abs(orderGrowth) }}%</span>
+          <span v-else>0% change</span>
         </div>
       </div>
-      <!-- <div class="pending-orders grid">
-        <div class="chart box">
-          <Charts :all-data="allChartData()" :pending-data="pendingChartData()" :payment-data="paymentChartData()" :selectedInterval="selectedInterval"/>
+      
+      <div class="metric-card">
+        <h3 class="metric-title">Pending Orders</h3>
+        <div class="metric-value">{{ pendingOrdersLength }}</div>
+        <div class="metric-description">{{ orders.length > 0 ? Math.round((pendingOrdersLength / orders.length) * 100) : 0 }}% of total orders</div>
+      </div>
+      
+      <div class="metric-card">
+        <h3 class="metric-title">Completed Orders</h3>
+        <div class="metric-value">{{ completedOrdersCount }}</div>
+        <div class="metric-description">{{ orders.length > 0 ? Math.round((completedOrdersCount / orders.length) * 100) : 0 }}% of total orders</div>
+      </div>
+    </div>
+
+    <!-- Main Chart -->
+    <div class="chart-card main-chart">
+      <h3 class="chart-title">{{ chartTitle }}</h3>
+      <charts 
+        :allData="chartData" 
+        :chartTitle="chartTitle" 
+        :xAxisData="xAxis" 
+        :selectedInterval="selectedInterval" 
+      />
+    </div>
+
+    <!-- Order Lists -->
+    <div class="lists-container">
+      <div class="list-card">
+        <div class="list-header">
+          <h3 class="list-title">Recent Orders</h3>
+          <router-link to="/orders" class="view-all">View All</router-link>
+        </div>
+        <div class="list-body">
+          <div v-for="order in recentOrders" :key="order.sln" class="list-item">
+            <div class="list-item-content">
+              <div class="customer-info">
+                <span class="customer-name">{{ order.customerName }}</span>
+                <span class="customer-address">{{ order.customerAddress }}</span>
+              </div>
+              <div class="order-info">
+                <span class="order-date">{{ getFormattedDate(new Date(order.orderDate), false) }}</span>
+              </div>
+            </div>
+            <router-link :to="{ name: 'currentOrder', params: { sln: order.sln } }" class="list-item-link">
+              <span class="view-details">View</span>
+            </router-link>
+          </div>
+          <div v-if="recentOrders.length === 0" class="empty-list">
+            <p>No recent orders found</p>
+          </div>
         </div>
       </div>
-      <div class="last-payment-details grid">
-        <div class="chart box">
-          <Charts :all-data="allChartData()" :pending-data="pendingChartData()" :payment-data="paymentChartData()" :selectedInterval="selectedInterval"/>
+
+      <div class="list-card">
+        <div class="list-header">
+          <h3 class="list-title">Pending Orders</h3>
+          <span class="badge">{{ pendingOrdersLength }}</span>
         </div>
-      </div> -->
+        <div class="list-body">
+          <div v-for="order in pendingOrders.slice(0, 5)" :key="order.sln" class="list-item">
+            <div class="list-item-content">
+              <div class="customer-info">
+                <span class="customer-name">{{ order.customerName }}</span>
+                <span class="customer-address">{{ order.customerAddress }}</span>
+              </div>
+              <div class="order-info">
+                <span class="order-date">{{ getFormattedDate(new Date(order.orderDate), false) }}</span>
+                <span class="status-badge pending">Pending</span>
+              </div>
+            </div>
+            <router-link :to="{ name: 'currentOrder', params: { sln: order.sln } }" class="list-item-link">
+              <span class="view-details">View</span>
+            </router-link>
+          </div>
+          <div v-if="pendingOrders.length === 0" class="empty-list">
+            <p>No pending orders</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="list-card">
+        <div class="list-header">
+          <h3 class="list-title">Last Payments</h3>
+          <span class="badge">{{ lastPaymentDetailsLength }}</span>
+        </div>
+        <div class="list-body">
+          <div v-for="order in lastPaymentDetails.slice(0, 5)" :key="order.sln" class="list-item">
+            <div class="list-item-content">
+              <div class="customer-info">
+                <span class="customer-name">{{ order.customerName }}</span>
+                <span class="customer-address">{{ order.customerAddress }}</span>
+              </div>
+              <div class="order-info">
+                <span class="order-date">{{ getFormattedDate(new Date(order.orderDate), false) }}</span>
+                <span class="status-badge received">Received</span>
+              </div>
+            </div>
+            <router-link :to="{ name: 'currentOrder', params: { sln: order.sln } }" class="list-item-link">
+              <span class="view-details">View</span>
+            </router-link>
+          </div>
+          <div v-if="lastPaymentDetails.length === 0" class="empty-list">
+            <p>No completed payments</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref, watch, watchEffect } from 'vue';
+import { onMounted, ref, watch, watchEffect, computed, nextTick } from 'vue';
 import { useSessionStore } from "@/stores/userSessionStore";
 import { useOrderStore } from "@/stores/orderSessionStore";
+import { useThemeStore } from "@/stores/themeStore";
 import { fetchAllOrders } from "@/dbQueries";
 import Charts from "@/components/Charts.vue";
 import { getFormattedDate } from '@/util/util';
 
 const sessionStore = useSessionStore();
 const orderStore = useOrderStore();
+const themeStore = useThemeStore();
 
 const orders = ref([]);
 const chartData = ref([]);
@@ -94,6 +163,12 @@ const endDate = ref('');
 const selectedInterval = ref('today');
 const chartTitle = ref('');
 const xAxis = ref([]);
+const orderGrowth = ref(0);
+
+// Computed property for completed orders count
+const completedOrdersCount = computed(() => {
+  return orders.value.filter(order => order.status === 'recieved').length;
+});
 
 // Today's Date
 const today = new Date();
@@ -104,6 +179,27 @@ const allOrders = async () => {
   orderStore.saveOrders(orders.value);
 };
 
+// Calculate order growth compared to previous period
+const calculateOrderGrowth = (timeInterval) => {
+  // Current period orders
+  const currentPeriodOrders = orders.value.filter(
+    order => new Date(order.orderDate).getTime() >= timeInterval
+  );
+  
+  // Previous period orders (same duration before the current period)
+  const previousPeriodStart = timeInterval - (today.getTime() - timeInterval);
+  const previousPeriodOrders = orders.value.filter(
+    order => new Date(order.orderDate).getTime() >= previousPeriodStart && new Date(order.orderDate).getTime() < timeInterval
+  );
+  
+  if (previousPeriodOrders.length === 0) {
+    return currentPeriodOrders.length > 0 ? 100 : 0; // 100% growth if no previous orders but have current orders
+  }
+  
+  const growthRate = ((currentPeriodOrders.length - previousPeriodOrders.length) / previousPeriodOrders.length) * 100;
+  return Math.round(growthRate);
+};
+
 // Update the orders data
 const updateOrdersData = () => {
   const {timeInterval, title, xaxis} = getStartDate();
@@ -111,20 +207,19 @@ const updateOrdersData = () => {
   chartTitle.value = title;
   xAxis.value = xaxis;
 
+  // Calculate order growth
+  orderGrowth.value = calculateOrderGrowth(timeInterval);
+
   // Clear the chartData
   const {data, filteredOrders} = getChartData(selectedInterval.value, timeInterval);
   chartData.value = convertDataMapToArray(data, xaxis);
 
   recentOrders.value = orders.value.slice(0, 5);
   pendingOrders.value = orders.value.filter(
-      item => {
-        return (new Date(item.orderDate).getTime() >= timeInterval) && (item.status === 'placed')
-      }
+      item => (new Date(item.orderDate).getTime() >= timeInterval) && (item.status === 'placed')
   );
   lastPaymentDetails.value = orders.value.filter(
-      item => {
-        return (new Date(item.orderDate).getTime() >= timeInterval) && (item.status === 'recieved')
-      }
+      item => (new Date(item.orderDate).getTime() >= timeInterval) && (item.status === 'recieved')
   );
 
   pendingOrdersLength.value = pendingOrders.value.length;
@@ -161,7 +256,7 @@ const getStartDate = () => {
     case 'quarterly':
       timeInterval = today.getTime() - 3 * 30 * 24 * 60 * 60 * 1000;
       title = 'Orders This Quarter';
-      xaxis = Array.from({ length: 3 }, (_, i) => getMonthName(2-i));  //['november', 'december', 'january']
+      xaxis = Array.from({ length: 3 }, (_, i) => getMonthName(2-i));
       break;
     case 'halfYearly':
       timeInterval = today.getTime() - 6 * 30 * 24 * 60 * 60 * 1000;
@@ -229,6 +324,7 @@ const getChartData = (interval, startTime) => {
 
   return {data, filteredOrders};
 };
+
 const convertDataMapToArray = (data, keys) => {
   const results = [];
   keys.forEach((key) => {
@@ -236,6 +332,9 @@ const convertDataMapToArray = (data, keys) => {
   });
   return results;
 };
+
+// Add computed property for currentTheme
+const currentTheme = computed(() => themeStore.getTheme);
 
 watch(() => pendingOrders.value, () => {
   pendingOrdersLength.value = pendingOrders.value.length;
@@ -249,43 +348,12 @@ watch(() => orders.value, () => {
   updateOrdersData();
 });
 
-// const fetchSalesData = async () => {
-// Implement logic to fetch sales data based on date range
-// };
-//
-// TODO: Using vue-chartjs make charts and graphs and then map that to the orders data
-// const updateChartData = () => {
-// Implement logic to update chart data based on selected time interval
-// };
-
-
-// Prepare all chart data
-const allChartData = () => {
-  return chartData.value;
-};
-
-// Prepare pending orders chart data
-const pendingChartData = () => {
-  return pendingOrders.value;
-}
-
-// Prepare last payment chart data
-const paymentChartData = () => {
-  return lastPaymentDetails.value;
-}
-
 // Watch for changes in selectedInterval and update orders accordingly
-watchEffect( () => {
+watchEffect(() => {
   updateOrdersData();
 });
 
-// // Watch for changes in startDate and endDate and fetch sales data accordingly
-// watch([startDate, endDate], () => {
-//   fetchSalesData();
-// });
-
 onMounted(async () => {
-
   // Check if the flag is present in sessionStorage
   const dataFetched = sessionStorage.getItem("dataFetched");
   if (dataFetched === "false" || !dataFetched) {
@@ -302,59 +370,386 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Add your styling here */
-
-.time-interval {
-  text-align: center;
-  width: fit-content;
-  margin-top: 10px;
-}
-
 .dashboard {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  margin-bottom: 5%;
+  padding: 24px;
+  background-color: var(--background-color);
+  min-height: calc(100vh - 150px);
+  gap: 24px;
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.box-container {
+/* Dashboard Header */
+.dashboard-header {
   display: flex;
-  flex-direction: row;
-  gap: 20px;
-}
-
-.charts-container {
-  display: flex;
-  flex-direction: row;
   justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.dashboard-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+/* Dark mode text color overrides */
+[data-theme="dark"] .dashboard,
+[data-theme="dark"] .dashboard-title,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] label,
+[data-theme="dark"] .time-interval,
+[data-theme="dark"] .metric-description {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] select,
+[data-theme="dark"] input {
+    background-color: #1e1e1e !important;
+    color: #ffffff !important;
+    border-color: #404040 !important;
+}
+
+/* Metrics Cards */
+.metrics-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
-  margin: 3% 1% 3% 1%;
+  width: 100%;
 }
 
-.box {
-  border: 1px solid #ccc;
-  padding: 10px;
-  border-radius: 5px;
-  text-align: center;
-  flex-grow: 1; /* Allow the box to grow and take available space */
+.metric-card {
+  background-color: var(--background-color);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(10, 61, 10, 0.1);
+  transition: all 0.3s ease;
+  border: 1px solid #0a3d0a;
+  position: relative;
+  overflow: hidden;
 }
 
-.list {
+.metric-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(10, 61, 10, 0.15);
+  border-color: #072907;
+}
+
+.metric-title {
+  font-size: 15px;
+  color: #0a3d0a;  /* Dark green for card titles */
+  margin-bottom: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  font-size: 32px;
+  font-weight: 800;
+  color: #072907;  /* Very dark green for metric values */
+  margin-bottom: 4px;
+  letter-spacing: -0.5px;
+}
+
+/* Dark mode specific styles */
+[data-theme="dark"] .metric-card {
+    background-color: #1e1e1e;
+    border-color: #404040;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .metric-card .metric-value {
+    color: #ffffff !important;
+}
+
+.metric-change, .metric-description {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+}
+
+.positive {
+  color: var(--success);
+}
+
+.negative {
+  color: var(--danger);
+}
+
+/* Charts */
+.chart-card {
+  background-color: var(--background-color);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(10, 61, 10, 0.1);
+  width: 100%;
+  border: 1px solid #0a3d0a;
+}
+
+.chart-title {
+  font-size: 18px;
+  color: #072907;
+  margin-bottom: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  text-transform: uppercase;
+}
+
+.main-chart {
+  margin-bottom: 24px;
+}
+
+/* Lists */
+.lists-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.list-card {
+  background-color: var(--background-color);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  text-align: left;
-  gap: 10px;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
 }
 
-.chart {
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--background-color);
+  transition: all 0.3s ease;
+}
+
+.list-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0a3d0a;  /* Dark green for list titles */
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.view-all {
+  font-size: 12px;
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.badge {
+  background-color: var(--primary);
+  color: #ffffff;
+  border-radius: 16px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.list-body {
+  padding: 0;
+  max-height: 350px;
+  overflow-y: auto;
+  background-color: var(--background-color);
+  box-shadow: inset 0 2px 4px rgba(10, 61, 10, 0.05);
+}
+
+.list-body p {
+  margin: 12px 0;
+  padding: 0 20px;
+}
+
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.list-item:hover {
+  background-color: var(--primary-focus);
+}
+
+.list-item-content {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  flex: 1;
+  margin: 0 12px;
 }
 
-select {
-  border: 1px solid #ccc;
-  padding: 5px;
-  text-align: center;
+.customer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.customer-name {
+  font-weight: 600;
+  color: #0a3d0a;  /* Dark green for customer names */
+  font-size: 14px;
+}
+
+.customer-address {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.order-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.order-date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.status-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+.status-badge.pending {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  font-weight: 600;
+}
+
+.status-badge.received {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  font-weight: 600;
+}
+
+.list-item-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.view-details {
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background-color: var(--primary-focus);
+  color: var(--primary);
+  transition: background-color var(--transition-fast);
+}
+
+.view-details:hover {
+  background-color: var(--primary);
+  color: var(--primary-inverse);
+}
+
+/* Dark mode specific styles */
+[data-theme="dark"] .status-badge.pending {
+    background-color: #3a2f00;
+    color: #ffe066;
+    border: 1px solid #665200;
+}
+
+[data-theme="dark"] .status-badge.received {
+    background-color: #0a3622;
+    color: #8ce3b0;
+    border: 1px solid #155724;
+}
+
+[data-theme="dark"] .chart-card,
+[data-theme="dark"] .list-card {
+    background-color: #1e1e1e;
+    border-color: #404040;
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .list-header {
+    border-bottom-color: #404040;
+    background-color: #1e1e1e;
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .list-body {
+    background-color: #1e1e1e;
+    transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] .list-item {
+    border-bottom-color: #404040;
+    transition: all 0.3s ease;
+}
+
+/* Light mode specific styles */
+[data-theme="light"] .chart-card,
+[data-theme="light"] .list-card {
+    background-color: var(--background-color);
+    border-color: #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+[data-theme="light"] .list-header {
+    border-bottom-color: #e2e8f0;
+    background-color: var(--background-color);
+    transition: all 0.3s ease;
+}
+
+[data-theme="light"] .list-body {
+    background-color: var(--background-color);
+    transition: background-color 0.3s ease;
+}
+
+[data-theme="light"] .list-item {
+    border-bottom-color: #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 16px;
+    gap: 16px;
+  }
+  
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .time-interval {
+    width: 100%;
+  }
+  
+  .lists-container {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

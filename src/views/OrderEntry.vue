@@ -142,7 +142,7 @@ const isSaveButtonDisabled = computed(() => {
 
                         <!-- Total Bill Amount -->
                         <label for="billAmt">
-                          <p>Total Bill Amount: &#8377; {{ order.totalBillAmt }} <small class="notification green strikethrough" v-if="order.totalBillAmt > 1.00">( &#8377; {{order.totalMrpBillAmt}})</small></p>
+                          <p><span style="color: #0a3d0a">Total Bill Amount: &#8377; {{ order.totalBillAmt }}</span> <small class="notification green strikethrough" v-if="order.totalBillAmt > 1.00">( &#8377; {{order.totalMrpBillAmt}})</small></p>
                         </label>
                     </fieldset>
 
@@ -168,7 +168,32 @@ const isSaveButtonDisabled = computed(() => {
 <style scoped>
 .order-form {
     margin: auto;
-    /* min-width: 480px; */
+    background-color: var(--background-color);
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(10, 61, 10, 0.1);
+}
+
+/* Form inputs */
+input, select, textarea {
+    background-color: var(--background-color);
+    border: 1px solid #0a3d0a !important;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #072907 !important;
+    transition: all 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #072907 !important;
+    box-shadow: 0 0 0 2px rgba(10, 61, 10, 0.1) !important;
+}
+
+input::placeholder, textarea::placeholder {
+    color: rgba(7, 41, 7, 0.5) !important;
 }
 
 hr {
@@ -184,7 +209,7 @@ hr {
     border-radius: 5px;
     padding: 20px;
     margin-bottom: 10px;
-
+    background-color: var(--background-color);
     filter: alpha(opacity=80);
     -moz-opacity: 0.8;
     opacity: 0.8;
@@ -196,5 +221,125 @@ hr {
 
 .strikethrough {
   text-decoration: line-through;
+}
+
+/* Dark mode secondary button hover styles */
+[data-theme="dark"] button.secondary:hover {
+  color: #0a3d0a !important;
+  background-color: #ffffff !important;
+  border-color: #0a3d0a !important;
+}
+
+.order-entry-container {
+  color: #072907;
+  padding: 24px;
+}
+
+.form-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #072907;
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+}
+
+.form-section {
+  margin-bottom: 24px;
+}
+
+.form-section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group label {
+  color: var(--text-color);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.form-control {
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font-weight: 500;
+  border-color: var(--text-color);
+}
+
+.order-items label {
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.total-section {
+  color: var(--text-color);
+  font-weight: 700;
+}
+
+.total-amount {
+  font-size: 24px;
+  color: var(--text-color);
+  font-weight: 800;
+}
+
+.action-buttons button {
+  font-weight: 600;
+}
+
+/* Theme-specific overrides */
+[data-theme="dark"] .form-control {
+  background-color: #1e1e1e !important;
+  color: #ffffff !important;
+  border-color: #404040 !important;
+}
+
+[data-theme="dark"] .form-control:focus {
+  border-color: #606060 !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] select.form-control option {
+  background-color: #1e1e1e;
+  color: #ffffff;
+}
+
+/* Theme-specific overrides for dark mode */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background-color: #1e1e1e !important;
+    color: #ffffff !important;
+    border-color: #404040 !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+[data-theme="dark"] label {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .order-item-container {
+    background-color: #1e1e1e;
+    border-color: #404040;
+}
+
+[data-theme="dark"] p,
+[data-theme="dark"] small,
+[data-theme="dark"] span {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] small.green {
+    color: #4caf50 !important;
+}
+
+[data-theme="dark"] h5 {
+    color: #ffffff !important;
 }
 </style>

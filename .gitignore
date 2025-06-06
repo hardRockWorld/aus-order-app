@@ -102,7 +102,6 @@ dist
 
 # vuepress v2.x temp and cache directory
 .temp
-.cache
 
 # Docusaurus cache and generated files
 .docusaurus
@@ -133,6 +132,9 @@ dist
 .vscode
 .idea
 
+#for AI tools
+.continue
+
 # for mac files
 .DS_Store
 
@@ -146,3 +148,9 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 firebase-export-*
+
+# Emulator data skip
+emulator-data
+
+# App hosting emulator yaml
+apphosting.emulator.yaml
