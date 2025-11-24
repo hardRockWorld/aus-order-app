@@ -29,6 +29,24 @@ const router = createRouter({
       },
     },
     {
+      path: "/price-management",
+      name: "priceManagement",
+      component: () => import("../views/PriceManagement.vue"),
+      meta: {
+        requiresAuth: true,
+        title: "Price Management",
+      },
+    },
+    {
+      path: "/price-management/history",
+      name: "priceHistory",
+      component: () => import("../views/PriceHistory.vue"),
+      meta: {
+        requiresAuth: true,
+        title: "Price Change History",
+      },
+    },
+    {
       path: "/orders",
       name: "orders",
       component: LandingPage,
@@ -93,7 +111,7 @@ const getCurrentUser = () => {
         removeListener();
         resolve(user);
       },
-      reject
+      reject,
     );
   });
 };

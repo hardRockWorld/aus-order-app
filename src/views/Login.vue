@@ -21,11 +21,11 @@ const login = async (email, password) => {
   setPersistence(auth, browserSessionPersistence)
       .then(() => {
         signInWithEmailAndPassword(auth, email, password)
-            .then(() => {
-                console.log('user is loggedin: ');
-                setUser(user, email=email, true, (new Date()).getTime());
-
-                // Instead of showing the order list page, show dashboard instead
+            .then((userCredential) => {
+                console.log('User signed in successfully');
+                // Do NOT call setUser here with auth.currentUser; it might be stale.
+                // App.vue's onAuthStateChanged handler will set the session and admin flag reliably.
+                // Navigate to dashboard after sign-in; state will populate via auth listener.
                 router.push('/dashboard');
             })
             .catch((error) => {

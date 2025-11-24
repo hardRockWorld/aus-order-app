@@ -1,5 +1,7 @@
 <script setup>
-import {computed, ref, watch} from 'vue';
+import { computed, ref, watch } from "vue";
+import { useProductStore } from "@/stores/productStore";
+const productStore = useProductStore();
 
 const props = defineProps({
     index: Number,
@@ -7,51 +9,68 @@ const props = defineProps({
     qty: Number,
     products: Array,
     discount: {
-      type: Number,
-      default: 30.00,
-    }
-})
+        type: Number,
+        default: 30.0,
+    },
+});
 
 const emit = defineEmits({
     "delete-item": (value) => typeof value === "number" && value >= 0,
-    "update:total-price": (value1, value2) => (typeof value1 === "string") && (typeof value2 === "number" && value2 >= 0),
-    "update:total-mrp-price": (value1, value2) => (typeof value1 === "string") && (typeof value2 === "number" && value2 >= 0),
+    "update:total-price": (value1, value2) =>
+        typeof value1 === "string" && typeof value2 === "number" && value2 >= 0,
+    "update:total-mrp-price": (value1, value2) =>
+        typeof value1 === "string" && typeof value2 === "number" && value2 >= 0,
     "update:discount": (value) => typeof value === "number" && value >= 0,
-    'update:name': (value) => typeof value === "string",
-    'update:qty': (value) => typeof value === "number" && value >= 0
-})
+    "update:name": (value) => typeof value === "string",
+    "update:qty": (value) => typeof value === "number" && value >= 0,
+});
 
-const products = props.products;
+// Use provided products prop when available; otherwise fall back to reactive productStore.products
+const products =
+    props.products && props.products.length
+        ? props.products
+        : productStore.products;
 const productName = computed(() => props.name);
 const productQty = computed(() => props.qty);
 const discountRate = computed(() => props.discount);
 
 const calcTotalPrice = () => {
-  const product = products.find((p) => {
-    return p.name === productName.value;
-  });
-  const discount_rate = (typeof discountRate.value === "number" && discountRate.value >= 0) ? discountRate.value : 0;
-  emit('update:discount', discount_rate);
-  const total = product ? parseFloat((product.mrp * productQty.value * (1 -  discount_rate/100)).toFixed(2)) : 0;
+    const product = products.find((p) => {
+        return p.name === productName.value;
+    });
+    const discount_rate =
+        typeof discountRate.value === "number" && discountRate.value >= 0
+            ? discountRate.value
+            : 0;
+    emit("update:discount", discount_rate);
+    const total = product
+        ? parseFloat(
+              (
+                  product.mrp *
+                  productQty.value *
+                  (1 - discount_rate / 100)
+              ).toFixed(2),
+          )
+        : 0;
 
-  // pass data from child to parent for updating totalPrice in parent
-  emit('update:total-price', productName, total);
-  return total;
-}
+    // pass data from child to parent for updating totalPrice in parent
+    emit("update:total-price", productName, total);
+    return total;
+};
 
 const calcTotalMrpPrice = () => {
-  const product = products.find((p) => {
-    return p.name === productName.value;
-  });
+    const product = products.find((p) => {
+        return p.name === productName.value;
+    });
 
-  // total MRP price
-  const mrpTotal = product ? product.mrp * productQty.value : 0;
+    // total MRP price
+    const mrpTotal = product ? product.mrp * productQty.value : 0;
 
-  // pass data from child to parent for updating totalPrice in parent
-  emit('update:total-mrp-price', productName, mrpTotal);
+    // pass data from child to parent for updating totalPrice in parent
+    emit("update:total-mrp-price", productName, mrpTotal);
 
-  return mrpTotal;
-}
+    return mrpTotal;
+};
 
 // define and initialize totalPrice value
 const totalPrice = ref(0);
@@ -62,29 +81,44 @@ totalPrice.value = calcTotalPrice();
 const totalMrpPrice = ref(0);
 totalMrpPrice.value = calcTotalMrpPrice();
 
-
 watch([productName, productQty, discountRate], () => {
-  totalPrice.value = calcTotalPrice();
-  totalMrpPrice.value = calcTotalMrpPrice();
+    totalPrice.value = calcTotalPrice();
+    totalMrpPrice.value = calcTotalMrpPrice();
 });
 
 // Expose the totalPrice to the template
 defineExpose({
-  totalPrice,
-  totalMrpPrice,
-  discountRate
+    totalPrice,
+    totalMrpPrice,
+    discountRate,
 });
 </script>
 
 <template>
     <div class="grid">
         <label for="items">
-            <span style="display: flex; gap: 10px;">
-            <a href="#" @click.prevent="$emit('delete-item', index)" class="danger"><i class="fa fa-trash" aria-hidden="true"></i></a>
-            <label>Item #<span class="sln">{{ index + 1 }}</span></label>
+            <span style="display: flex; gap: 10px">
+                <a
+                    href="#"
+                    @click.prevent="$emit('delete-item', index)"
+                    class="danger"
+                    ><i class="fa fa-trash" aria-hidden="true"></i
+                ></a>
+                <label
+                    >Item #<span class="sln">{{ index + 1 }}</span></label
+                >
             </span>
-            <input list="items" :modelValue="name" :value="name" :aria-invalid="name === ''" @input="$emit('update:name', $event.target.value)" placeholder="Item Name">
-            <small class="notification red" v-if="name.trim() === ''">Select an item</small>
+            <input
+                list="items"
+                :modelValue="name"
+                :value="name"
+                :aria-invalid="name === ''"
+                @input="$emit('update:name', $event.target.value)"
+                placeholder="Item Name"
+            />
+            <small class="notification red" v-if="name.trim() === ''"
+                >Select an item</small
+            >
             <datalist
                 id="items"
                 :value="name"
@@ -92,60 +126,70 @@ defineExpose({
                 required
                 aria-invalid="true"
             >
-            <option value="" selected>Select an item</option>
-            <option v-for="(product) in products" :key="product.slno" :value="product.name">{{ product.name }}</option>
+                <option value="" selected>Select an item</option>
+                <option
+                    v-for="product in products"
+                    :key="product.slno"
+                    :value="product.name"
+                >
+                    {{ product.name }}
+                </option>
             </datalist>
             <!-- Add the notification message -->
-
-
         </label>
 
         <label for="qty">
-        Qty
-        <input
-            type="number"
-            :value="qty"
-            @input="$emit('update:qty', Number($event.target.value))"
-            id="qty"
-            name="qty"
-            placeholder="Qty"
-            required
-            :aria-invalid="qty < 1"
+            Qty
+            <input
+                type="number"
+                :value="qty"
+                @input="$emit('update:qty', Number($event.target.value))"
+                id="qty"
+                name="qty"
+                placeholder="Qty"
+                required
+                :aria-invalid="qty < 1"
+            />
+            <small class="notification red" v-if="qty < 1"
+                >Qty cannot be 0</small
             >
-            <small class="notification red" v-if="qty < 1">Qty cannot be 0</small>
         </label>
     </div>
 
     <!-- pricing section -->
     <div class="grid">
-      <label for="itemPrice">
-        Item Price:
-        <div class="currency-wrap">
-          <span class="currency-code">&#8377;</span>
-          <input
-              type="number"
-              :value="totalPrice"
-              id="itemPrice"
-              name="itemPrice"
-              readonly="readonly"
-              class="text-currency"
-          />
-        </div>
-        <small class="notification green strikethrough" v-if="qty >= 1">( &#8377; {{totalMrpPrice}})</small>
-      </label>
-      <label for="discount">
-        Discount &#37;:
-          <input
-            type="number"
-            :value="discount"
-            @input="$emit('update:discount', Number($event.target.value))"
-            step="0.01"
-            id="discount"
-            name="discount"
-            :aria-invalid="discount <= 0"
-          />
-          <small class="notification red" v-if="discount <= 0">No Discount!</small>
-      </label>
+        <label for="itemPrice">
+            Item Price:
+            <div class="currency-wrap">
+                <span class="currency-code">&#8377;</span>
+                <input
+                    type="number"
+                    :value="totalPrice"
+                    id="itemPrice"
+                    name="itemPrice"
+                    readonly="readonly"
+                    class="text-currency"
+                />
+            </div>
+            <small class="notification green strikethrough" v-if="qty >= 1"
+                >( &#8377; {{ totalMrpPrice }})</small
+            >
+        </label>
+        <label for="discount">
+            Discount &#37;:
+            <input
+                type="number"
+                :value="discount"
+                @input="$emit('update:discount', Number($event.target.value))"
+                step="0.01"
+                id="discount"
+                name="discount"
+                :aria-invalid="discount <= 0"
+            />
+            <small class="notification red" v-if="discount <= 0"
+                >No Discount!</small
+            >
+        </label>
     </div>
 </template>
 
@@ -160,7 +204,7 @@ defineExpose({
 }
 
 .green {
-  color: green;
+    color: green;
 }
 
 .sln {
@@ -168,7 +212,7 @@ defineExpose({
 }
 
 .strikethrough {
-  text-decoration: line-through;
+    text-decoration: line-through;
 }
 
 .currency-wrap {
@@ -190,7 +234,9 @@ defineExpose({
 }
 
 /* Add consistent styling for all inputs */
-input, select, textarea {
+input,
+select,
+textarea {
     background-color: var(--background-color) !important;
     border: 1px solid #0a3d0a !important;
     padding: 8px 12px;
@@ -199,11 +245,15 @@ input, select, textarea {
     color: #0a3d0a;
 }
 
-input:hover, select:hover, textarea:hover {
+input:hover,
+select:hover,
+textarea:hover {
     border-color: #156315 !important;
 }
 
-input:focus, select:focus, textarea:focus {
+input:focus,
+select:focus,
+textarea:focus {
     outline: none;
     border-color: #156315 !important;
     box-shadow: 0 0 0 2px rgba(10, 61, 10, 0.1);
@@ -219,7 +269,8 @@ input.text-currency {
     padding-left: 25px;
 }
 
-input, select {
+input,
+select {
     color: #0a3d0a;
 }
 

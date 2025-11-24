@@ -1,19 +1,84 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // This rule allows anyone with your Firestore database reference to view, edit,
-    // and delete all data in your Firestore database. It is useful for getting
-    // started, but it is configured to expire after 30 days because it
-    // leaves your app open to attackers. At that time, all client
-    // requests to your Firestore database will be denied.
-    //
-    // Make sure to write security rules for your app before that time, or else
-    // all client requests to your Firestore database will be denied until you Update
-    // your rules
+    /**
+     * Helper: require authenticated user
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Helper: check admins collection for a document matching the current uid.
+     * This assumes you manage admin entries in "admins/{uid}" documents (e.g. created via
+     * the Firebase console or a trusted server process). Using custom claims is an
+     * alternative; adapt accordingly if you use them.
+     */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    /**
+     * Products collection:
+     * - Reads: allowed (public) so product lists and order UIs can load without special rights.
+     *   If you prefer to restrict reads to authenticated users, change `if true` to `isSignedIn()`.
+     * - Writes (create/update/delete): only admins may perform these operations.
+     */
+    match /products/{productId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * Price changes audit log:
+     * - Reads: allowed for authenticated users so the UI can display history.
+     *   If you want the history visible only to admins, change to `if isAdmin()`.
+     * - Creates/updates/deletes: only admins may write audit entries.
+     *
+     * Additional validation on create ensures the document contains expected fields and
+     * that the `changedBy.uid` matches the authenticated user creating the record.
+     * We also check that numeric fields are numbers and `createdAt` is a timestamp.
+     */
+    match /price_changes/{changeId} {
+      allow get, list: if isSignedIn();
+
+      allow create: if isAdmin()
+        && request.resource.data.productId is string
+        && (request.resource.data.newPrice is number)
+        && (request.resource.data.oldPrice is number || request.resource.data.oldPrice == null)
+        && request.resource.data.changedBy is map
+        && request.resource.data.changedBy.uid == request.auth.uid
+        && (request.resource.data.createdAt is timestamp);
+
+      // Only admins can change or remove audit entries
+      allow update, delete: if isAdmin();
+    }
+
+    /**
+     * Admins collection:
+     * - Reading admin documents is restricted to admins only.
+     * - Only admins can create/update/delete admin entries.
+     *
+     * Note: Bootstrapping the first admin must be done from a trusted context
+     * (Firebase console, admin SDK, or a secure Cloud Function).
+     */
+    match /admins/{userId} {
+      // Allow a signed-in user to read their own admin marker so the client can detect admin status.
+      allow get: if isSignedIn() && request.auth.uid == userId;
+      // Listing all admins is restricted to admins only
+      allow list: if isAdmin();
+      // Only admins can manage admin documents
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * Fallback: deny everything else by default.
+     * Add explicit rules for other collections used by your application (orders, customers, etc.)
+     * following the principle of least privilege.
+     */
     match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2026, 12, 31);
+      allow read, write: if false;
     }
   }
 }
