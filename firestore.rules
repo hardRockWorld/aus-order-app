@@ -30,8 +30,9 @@ service cloud.firestore {
      */
     match /products/{productId} {
       // Allow reads for everyone so the app can load products without special rights
+      // Use `read` to cover both `get` and `list` (query).
       // Change to `isSignedIn()` if you want to restrict to authenticated users only.
-      allow get, list: if true;
+      allow read: if true;
       // Writes restricted to admins
       allow create, update, delete: if isAdmin();
     }
@@ -64,7 +65,10 @@ service cloud.firestore {
      * We also check that numeric fields are numbers and `createdAt` is a timestamp.
      */
     match /price_changes/{changeId} {
-      allow get, list: if isSignedIn();
+      // Allow standard reads (get, list/query) for authenticated users
+      // Use explicit `aggregate` rule for count queries.
+      allow read: if isSignedIn();
+      allow aggregate: if isSignedIn();
 
       allow create: if isAdmin()
         && request.resource.data.productId is string
