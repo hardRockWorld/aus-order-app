@@ -33,7 +33,7 @@ service cloud.firestore {
       // Use `read` to cover both `get` and `list` (query).
       // Change to `isSignedIn()` if you want to restrict to authenticated users only.
       // allow get, list: isSignedIn();
-      allow read: isSignedIn();
+      allow read: if isSignedIn();
       // Writes restricted to admins
       allow create, update, delete: if isAdmin();
     }
