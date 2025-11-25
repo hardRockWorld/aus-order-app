@@ -11,6 +11,7 @@ import { useSessionStore } from "@/stores/userSessionStore";
 import { useOrderStore } from "@/stores/orderSessionStore";
 import { getFormattedDate } from "@/util/util";
 import { useProductStore } from "@/stores/productStore";
+import { getProductPriceAtTime } from "@/db/priceService";
 
 /*
   Replaced static product import with a Product Pinia store.
@@ -155,31 +156,74 @@ watch(
 // calculate total discounted amount
 const calcTotalBillAmt = () => {
     let totalOrderAmt = 0;
-    itemTotalPrices.forEach((value, key) => (totalOrderAmt += value));
-    currentOrder.value.totalBillAmt = Math.round(totalOrderAmt);
+    itemTotalPrices.forEach((value) => (totalOrderAmt += value));
+    if (currentOrder.value) {
+        currentOrder.value.totalBillAmt = Math.round(totalOrderAmt);
+    }
 };
 
-// calculate total mrp amount
+// calculate total mrp amount (green strikethrough)
 const calcTotalMrpAmount = () => {
     let totalMrpAmount = 0;
-    itemTotalMrpPrices.forEach((value, key) => (totalMrpAmount += value));
-    currentOrder.value.totalMrpBillAmt = Math.round(totalMrpAmount);
+    itemTotalMrpPrices.forEach((value) => (totalMrpAmount += value));
+    if (currentOrder.value) {
+        currentOrder.value.totalMrpBillAmt = Math.round(totalMrpAmount);
+    }
 };
 
 // for updating total discounted amt
 const itemTotalPrices = new Map();
-const updateTotalOrderAmt = (productName, itemAmount) => {
-    itemTotalPrices.set(productName, itemAmount);
+const updateTotalOrderAmt = (key, itemAmount) => {
+    // key should be unique per row to avoid duplicate-name collisions
+    itemTotalPrices.set(key, itemAmount);
     // calculate the total order amount
     calcTotalBillAmt();
 };
 
 // for updating total mrp amt
 const itemTotalMrpPrices = new Map();
-const updateTotalMrpAmt = (productName, mrpTotal) => {
-    itemTotalMrpPrices.set(productName, mrpTotal);
+const updateTotalMrpAmt = (key, mrpTotal) => {
+    // key should be unique per row to avoid duplicate-name collisions
+    itemTotalMrpPrices.set(key, mrpTotal);
     // calculate the total order amount
     calcTotalMrpAmount();
+};
+
+// Helper: recompute both totals directly from items to ensure consistency
+const recomputeTotalsFromItems = () => {
+    if (!currentOrder.value || !Array.isArray(currentOrder.value.items)) return;
+    // Clear maps to avoid stale keys and rebuild
+    itemTotalPrices.clear();
+    itemTotalMrpPrices.clear();
+
+    // Build a quick lookup for product mrp by name
+    const prodMap = new Map(
+        (products.value || []).map((p) => [p.name, Number(p.mrp)])
+    );
+
+    currentOrder.value.items.forEach((item, i) => {
+        if (!item) return;
+        const key = `${i}:${item?.name || ""}`;
+        const qty = Number(item?.qty || 0);
+        const disc = Number(
+            item?.discount == null || Number.isNaN(item?.discount)
+                ? 30
+                : item.discount
+        );
+        const unitMrp = Number(
+            item?.fixedMrp != null && !Number.isNaN(item.fixedMrp)
+                ? item.fixedMrp
+                : prodMap.get(item?.name) || 0
+        );
+        const mrpTotal = unitMrp * qty;
+        const discounted = parseFloat((mrpTotal * (1 - disc / 100)).toFixed(2));
+
+        itemTotalMrpPrices.set(key, mrpTotal);
+        itemTotalPrices.set(key, discounted);
+    });
+
+    calcTotalMrpAmount();
+    calcTotalBillAmt();
 };
 
 const updateStatus = async () => {
@@ -188,6 +232,9 @@ const updateStatus = async () => {
         return;
     }
     isLoading.value = true;
+
+    // Ensure totals reflect the latest items before saving
+    recomputeTotalsFromItems();
 
     const updateResult = await updateEditOrder(db, currentOrder.value);
     if (updateResult) {
@@ -239,7 +286,9 @@ const closeModal = () => {
         msg: "",
     };
 
+    // Clear both maps to avoid stale accumulation on next open
     itemTotalPrices.clear();
+    itemTotalMrpPrices.clear();
     modalCloseWithoutSave.value = false; // Reset the flag
 
     if (openedFromURL && route.params.sln) {
@@ -251,8 +300,119 @@ const closeModal = () => {
 };
 
 const addOrderItem = () => {
-    currentOrder.value.items.push({ name: "", qty: 0 });
+    currentOrder.value.items.push({ name: "", qty: 0, discount: 30, fixedMrp: null });
+    // After adding, reset and recompute totals so strike-through stays correct
+    recomputeTotalsFromItems();
 };
+
+// Click handler for opening an order row
+const onOrderRowClick = async (orderRow) => {
+    try {
+        // Reset totals map to avoid accumulation when opening/editing repeatedly
+        itemTotalPrices.clear();
+        itemTotalMrpPrices.clear();
+        currentOrder.value = orderRow;
+        await backfillFixedMrpForCurrentOrder();
+        // Recompute once after backfill to initialize totals
+        recomputeTotalsFromItems();
+        modalIsOpen.value = !isInvoiceButtonClicked.value;
+    } catch (e) {
+        // Fallback to opening modal even if backfill fails
+        modalIsOpen.value = !isInvoiceButtonClicked.value;
+    }
+};
+
+// Backfill fixedMrp for legacy orders when opening the modal
+const backfillFixedMrpForCurrentOrder = async () => {
+    try {
+        if (!currentOrder.value || !Array.isArray(currentOrder.value.items)) return;
+        const orderTs =
+            typeof currentOrder.value.orderDate === "number"
+                ? currentOrder.value.orderDate
+                : new Date(currentOrder.value.orderDate).getTime();
+        for (const item of currentOrder.value.items) {
+            if (!item) continue;
+            if (item.fixedMrp == null || Number.isNaN(item.fixedMrp)) {
+                const price = await getProductPriceAtTime(null, orderTs, {
+                    productName: item.name,
+                });
+                item.fixedMrp = Number(price);
+            }
+            // Ensure discount default exists for older orders
+            if (item.discount == null || Number.isNaN(item.discount)) {
+                item.discount = 30;
+            }
+        }
+    } catch (e) {
+        console.warn("Failed to backfill fixedMrp for order items", e);
+    }
+};
+
+// --- Historical price recompute in Edit mode ---
+// Normalize currentOrder.orderDate to a millisecond timestamp
+const getEditOrderTimestamp = () => {
+    const val = currentOrder.value?.orderDate;
+    if (typeof val === "number") return val;
+    if (typeof val === "string" && val) {
+        const t = new Date(val).getTime();
+        return Number.isFinite(t) ? t : Date.now();
+    }
+    return Date.now();
+};
+
+// Recompute fixedMrp for all items based on the currently selected edit date
+const updateItemsFixedMrpForEditDate = async () => {
+    try {
+        if (!currentOrder.value || !Array.isArray(currentOrder.value.items)) return;
+        const ts = getEditOrderTimestamp();
+        // Clear totals maps before recomputation to prevent accumulation
+        itemTotalPrices.clear();
+        itemTotalMrpPrices.clear();
+        const tasks = currentOrder.value.items.map(async (item) => {
+            if (!item) return;
+            if (!item.name) {
+                // Clear when no product selected to avoid stale values
+                item.fixedMrp = null;
+                return;
+            }
+            try {
+                const price = await getProductPriceAtTime(null, ts, {
+                    productName: item.name,
+                });
+                item.fixedMrp = Number(price);
+                if (item.discount == null || Number.isNaN(item.discount)) {
+                    item.discount = 30;
+                }
+            } catch (e) {
+                // leave fixedMrp as-is on failure
+            }
+        });
+        await Promise.all(tasks);
+        // After all items updated, recompute totals once
+        recomputeTotalsFromItems();
+    } catch (e) {
+        // noop
+    }
+};
+
+// Watch for date changes while editing to recompute historical prices
+watch(
+    () => currentOrder.value?.orderDate,
+    () => {
+        if (!modalIsOpen.value) return; // only when editing modal is open
+        updateItemsFixedMrpForEditDate();
+    },
+);
+
+// Watch product selection changes in edit mode and recompute fixedMrp
+watch(
+    () => (currentOrder.value?.items || []).map((it) => it.name),
+    () => {
+        if (!modalIsOpen.value) return;
+        updateItemsFixedMrpForEditDate();
+    },
+    { deep: false },
+);
 
 const isSaveButtonDisabled = computed(() => {
     const noItem =
@@ -345,10 +505,10 @@ const createPDF = (currentOrder) => {
                 `${i + 1}`, // Adding 1 to index to start from 1
                 `${item.name}`,
                 `${item.qty}`,
-                `${productData[item.name] ? productData[item.name].mrp : 0}`, // Assuming products is an array and you need to find the matching product
+                `${item.fixedMrp != null ? item.fixedMrp : productData[item.name] ? productData[item.name].mrp : 0}`,
                 `${item.discount}`,
                 `${(
-                    productData[item.name].mrp *
+                    (item.fixedMrp != null ? item.fixedMrp : productData[item.name] ? productData[item.name].mrp : 0) *
                     item.qty *
                     (1 - item.discount / 100)
                 ).toFixed(2)}`,
@@ -362,10 +522,10 @@ const createPDF = (currentOrder) => {
                 `${i + 1}`, // Adding 1 to index to start from 1
                 `${item.name}`,
                 `${item.qty}`,
-                `${productData[item.name] ? productData[item.name].mrp : 0}`, // Assuming products is an array and you need to find the matching product
+                `${item.fixedMrp != null ? item.fixedMrp : productData[item.name] ? productData[item.name].mrp : 0}`,
                 `${item.discount}`,
                 `${(
-                    productData[item.name].mrp *
+                    (item.fixedMrp != null ? item.fixedMrp : productData[item.name] ? productData[item.name].mrp : 0) *
                     item.qty *
                     (1 - item.discount / 100)
                 ).toFixed(2)}`,
@@ -440,12 +600,7 @@ const createPDF = (currentOrder) => {
                                 v-for="order in filteredOrders"
                                 :key="order?.sln"
                                 class="order-item-row"
-                                @click="
-                                    currentOrder = order;
-                                    isInvoiceButtonClicked
-                                        ? (modalIsOpen = false)
-                                        : (modalIsOpen = true);
-                                "
+                                @click="onOrderRowClick(order)"
                             >
                                 <td>{{ order?.sln }}</td>
                                 <td>{{ order?.customerName }}</td>
@@ -613,21 +768,22 @@ const createPDF = (currentOrder) => {
                                 v-model:name="item.name"
                                 v-model:qty="item.qty"
                                 v-model:discount="item.discount"
+                                v-model:fixedMrp="item.fixedMrp"
                                 :index="i"
                                 :products="products"
                                 @delete-item="
-                                    (idx) => currentOrder.items.splice(idx, 1)
+                                    (idx) => { currentOrder.items.splice(idx, 1); recomputeTotalsFromItems(); }
                                 "
                                 @update:total-price="
                                     (productName, itemAmount) =>
                                         updateTotalOrderAmt(
-                                            productName,
+                                            `${i}:${productName}`,
                                             itemAmount,
                                         )
                                 "
                                 @update:total-mrp-price="
                                     (productName, mrpTotal) =>
-                                        updateTotalMrpAmt(productName, mrpTotal)
+                                        updateTotalMrpAmt(`${i}:${productName}`, mrpTotal)
                                 "
                             />
                         </div>

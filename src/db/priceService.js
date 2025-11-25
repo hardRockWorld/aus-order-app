@@ -212,6 +212,87 @@ export async function updateProductPrice(
 }
 
 /**
+ * Resolve a product's MRP as of a specific timestamp.
+ * Strategy:
+ * 1) Find the last change at or before the timestamp => use its newPrice.
+ * 2) Else find the first change after the timestamp => use its oldPrice.
+ * 3) Else fallback to the product's current mrp.
+ *
+ * Accepts product id (string/number). If productName is provided instead,
+ * pass it via the options { productName } to resolve the product id.
+ */
+export async function getProductPriceAtTime(productId, timestamp, options = {}) {
+  let pid = productId ? String(productId) : null;
+  // Resolve product id by name if needed
+  if (!pid && options?.productName) {
+    const qByName = query(
+      collection(db, "products"),
+      where("name", "==", options.productName),
+      fbLimit(1),
+    );
+    const snap = await getDocs(qByName);
+    if (!snap.empty) {
+      pid = snap.docs[0].id;
+    }
+  }
+
+  if (!pid) throw new Error("getProductPriceAtTime: productId or productName required");
+
+  const productRef = doc(db, "products", pid);
+  const priceChanges = collection(db, "price_changes");
+
+  // 1) last change at or before t
+  const qBefore = query(
+    priceChanges,
+    where("productId", "==", String(pid)),
+    orderBy("createdAt", "desc"),
+    fbLimit(20),
+  );
+  // We cannot directly filter by <= with composite without index setup here, so
+  // we fetch a small recent window and pick the first <= timestamp.
+  const snapBefore = await getDocs(qBefore);
+  let candidateBefore = null;
+  snapBefore.forEach((d) => {
+    const data = d.data();
+    const ts = data?.createdAt?.toMillis?.() ?? data?.createdAt;
+    if (ts != null && ts <= timestamp && candidateBefore == null) {
+      candidateBefore = data;
+    }
+  });
+  if (candidateBefore) {
+    return Number(candidateBefore.newPrice);
+  }
+
+  // 2) first change after t
+  const qAfter = query(
+    priceChanges,
+    where("productId", "==", String(pid)),
+    orderBy("createdAt", "asc"),
+    fbLimit(20),
+  );
+  const snapAfter = await getDocs(qAfter);
+  let candidateAfter = null;
+  snapAfter.forEach((d) => {
+    const data = d.data();
+    const ts = data?.createdAt?.toMillis?.() ?? data?.createdAt;
+    if (ts != null && ts > timestamp && candidateAfter == null) {
+      candidateAfter = data;
+    }
+  });
+  if (candidateAfter) {
+    return Number(candidateAfter.oldPrice);
+  }
+
+  // 3) fallback to product's current mrp
+  const prodSnap = await getDoc(productRef);
+  if (prodSnap.exists()) {
+    const data = prodSnap.data();
+    return Number(data?.mrp ?? 0);
+  }
+  return 0;
+}
+
+/**
  * Fetch price change history with optional filters.
  *
  * Options:
@@ -315,9 +396,12 @@ export async function fetchChangesCountPerDay({ from = null, to = null } = {}) {
 export async function isUserAdmin(uid) {
   if (!uid) return false;
   try {
+    // Check explicit admin marker document and ensure isAdmin == true
     const ref = doc(db, "admins", String(uid));
     const snap = await getDoc(ref);
-    return snap.exists();
+    if (!snap.exists()) return false;
+    const data = snap.data() || {};
+    return data.isAdmin === true;
   } catch (err) {
     console.error("isUserAdmin lookup failed", err);
     return false;

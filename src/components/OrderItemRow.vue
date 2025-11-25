@@ -12,6 +12,12 @@ const props = defineProps({
         type: Number,
         default: 30.0,
     },
+    // Locked unit MRP captured at the time the item was added to the order.
+    // When present, all calculations use this value instead of live product price.
+    fixedMrp: {
+        type: Number,
+        default: null,
+    },
 });
 
 const emit = defineEmits({
@@ -23,6 +29,8 @@ const emit = defineEmits({
     "update:discount": (value) => typeof value === "number" && value >= 0,
     "update:name": (value) => typeof value === "string",
     "update:qty": (value) => typeof value === "number" && value >= 0,
+    // v-model for fixedMrp lock field
+    "update:fixedMrp": (value) => typeof value === "number" && value >= 0,
 });
 
 // Use provided products prop when available; otherwise fall back to reactive productStore.products
@@ -33,6 +41,7 @@ const products =
 const productName = computed(() => props.name);
 const productQty = computed(() => props.qty);
 const discountRate = computed(() => props.discount);
+const fixedMrp = computed(() => props.fixedMrp);
 
 const calcTotalPrice = () => {
     const product = products.find((p) => {
@@ -43,18 +52,17 @@ const calcTotalPrice = () => {
             ? discountRate.value
             : 0;
     emit("update:discount", discount_rate);
-    const total = product
-        ? parseFloat(
-              (
-                  product.mrp *
-                  productQty.value *
-                  (1 - discount_rate / 100)
-              ).toFixed(2),
-          )
-        : 0;
+    // Prefer locked fixedMrp if provided; else fall back to live product.mrp
+    const unitMrp =
+        fixedMrp.value != null && !Number.isNaN(fixedMrp.value)
+            ? fixedMrp.value
+            : product?.mrp ?? 0;
+    const total = parseFloat(
+        (unitMrp * productQty.value * (1 - discount_rate / 100)).toFixed(2),
+    );
 
     // pass data from child to parent for updating totalPrice in parent
-    emit("update:total-price", productName, total);
+    emit("update:total-price", productName.value, total);
     return total;
 };
 
@@ -63,25 +71,42 @@ const calcTotalMrpPrice = () => {
         return p.name === productName.value;
     });
 
-    // total MRP price
-    const mrpTotal = product ? product.mrp * productQty.value : 0;
+    // Use locked fixedMrp if present; else use live product.mrp
+    const unitMrp =
+        fixedMrp.value != null && !Number.isNaN(fixedMrp.value)
+            ? fixedMrp.value
+            : product?.mrp ?? 0;
+    const mrpTotal = unitMrp * productQty.value;
 
     // pass data from child to parent for updating totalPrice in parent
-    emit("update:total-mrp-price", productName, mrpTotal);
+    emit("update:total-mrp-price", productName.value, mrpTotal);
 
     return mrpTotal;
+};
+
+// If item has a selected product but no fixedMrp yet, lock current price once.
+const maybeLockFixedMrp = () => {
+    if (!productName.value) return;
+    if (fixedMrp.value != null && !Number.isNaN(fixedMrp.value)) return;
+    const product = products.find((p) => p.name === productName.value);
+    if (product && typeof product.mrp === "number") {
+        emit("update:fixedMrp", Number(product.mrp));
+    }
 };
 
 // define and initialize totalPrice value
 const totalPrice = ref(0);
 // to populate data for each product while editing orders from orderList, initialize here
+maybeLockFixedMrp();
 totalPrice.value = calcTotalPrice();
 
 // for total mrp price calculation
 const totalMrpPrice = ref(0);
 totalMrpPrice.value = calcTotalMrpPrice();
 
-watch([productName, productQty, discountRate], () => {
+watch([productName, productQty, discountRate, fixedMrp], () => {
+    // If product selection changed, lock fixedMrp if not yet set
+    maybeLockFixedMrp();
     totalPrice.value = calcTotalPrice();
     totalMrpPrice.value = calcTotalMrpPrice();
 });

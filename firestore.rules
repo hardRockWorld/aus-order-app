@@ -16,7 +16,10 @@ service cloud.firestore {
      * alternative; adapt accordingly if you use them.
      */
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      // Admin only if there is an admin marker document at admins/{uid}
+      // with a field isAdmin set to true.
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true;
     }
 
     /**
@@ -26,8 +29,28 @@ service cloud.firestore {
      * - Writes (create/update/delete): only admins may perform these operations.
      */
     match /products/{productId} {
+      // Allow reads for everyone so the app can load products without special rights
+      // Change to `isSignedIn()` if you want to restrict to authenticated users only.
       allow get, list: if true;
+      // Writes restricted to admins
       allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * Orders collection:
+     * - Reads and aggregation (for getCountFromServer): allowed for authenticated users.
+     * - Creates and updates: allowed for authenticated users.
+     * - Deletes: restricted to admins only.
+     */
+    match /orders/{orderId} {
+      // allow standard reads (get, list/query)
+      allow get, list: if isSignedIn();
+      // allow count/aggregation queries used by the app
+      allow aggregate: if isSignedIn();
+      // allow creating and updating orders for signed-in users
+      allow create, update: if isSignedIn();
+      // only admins may delete orders
+      allow delete: if isAdmin();
     }
 
     /**

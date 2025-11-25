@@ -1,11 +1,12 @@
 <script setup>
 import OrderItemRow from "../components/OrderItemRow.vue";
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useProductStore } from "@/stores/productStore";
 import { addNewOrder, fetchSingleDocRef } from "@/dbQueries";
 import { db } from "@/fb";
 import { useSessionStore } from "@/stores/userSessionStore";
 import { useOrderStore } from "@/stores/orderSessionStore";
+import { getProductPriceAtTime } from "@/db/priceService";
 
 const sessionStore = useSessionStore();
 const orderStore = useOrderStore();
@@ -27,7 +28,7 @@ const blankOrder = {
     customerAddress: "",
     orderDate: Date.now(),
     salesman: "",
-    items: [{ name: "", qty: 0 }],
+    items: [{ name: "", qty: 0, discount: 30, fixedMrp: null }],
     status: "placed",
     notes: "",
     totalBillAmt: 0,
@@ -38,7 +39,7 @@ const order = ref({ ...blankOrder });
 const notificationMsg = ref("");
 
 const addOrderItem = () => {
-    order.value.items.push({ name: "", qty: 0 });
+    order.value.items.push({ name: "", qty: 0, discount: 30, fixedMrp: null });
 };
 
 // calculate total discounted amount
@@ -99,7 +100,7 @@ const submit = async () => {
         calcTotalBillAmt();
         order.value = {
             ...blankOrder,
-            items: [{ name: "", qty: 0 }],
+            items: [{ name: "", qty: 0, discount: 30, fixedMrp: null }],
             discount: 0,
         };
         loading.value = false;
@@ -109,6 +110,67 @@ const submit = async () => {
         loading.value = false;
     }
 };
+
+// --- Historical price handling for New Order ---
+// Compute timestamp from order.orderDate (can be number or string from input)
+const getOrderTimestamp = () => {
+    const val = order.value?.orderDate;
+    if (typeof val === "number") return val;
+    if (typeof val === "string" && val) {
+        const t = new Date(val).getTime();
+        return Number.isFinite(t) ? t : Date.now();
+    }
+    return Date.now();
+};
+
+// Update fixedMrp for each item according to selected order date
+const updateItemsFixedMrpForSelectedDate = async () => {
+    try {
+        if (!order.value || !Array.isArray(order.value.items)) return;
+        const ts = getOrderTimestamp();
+        const tasks = order.value.items.map(async (item) => {
+            if (!item) return;
+            if (!item.name) {
+                // If no product selected, clear fixedMrp to avoid stale values
+                item.fixedMrp = null;
+                return;
+            }
+            try {
+                const price = await getProductPriceAtTime(null, ts, {
+                    productName: item.name,
+                });
+                item.fixedMrp = Number(price);
+                if (item.discount == null || Number.isNaN(item.discount)) {
+                    item.discount = 30;
+                }
+            } catch (e) {
+                // fallback: leave fixedMrp as-is
+                // console.warn("Failed to resolve historical price", e);
+            }
+        });
+        await Promise.all(tasks);
+    } catch (e) {
+        // noop
+    }
+};
+
+// Watch for date changes and item selection changes to apply historical prices
+// When order date changes, refresh all items' fixedMrp
+watch(
+    () => order.value.orderDate,
+    () => {
+        updateItemsFixedMrpForSelectedDate();
+    },
+);
+
+// When item list changes (names added/changed), update fixedMrp for items with names
+watch(
+    () => order.value.items.map((it) => it.name),
+    () => {
+        updateItemsFixedMrpForSelectedDate();
+    },
+    { deep: false },
+);
 
 const isSaveButtonDisabled = computed(() => {
     const noItem = order.value.items == null || order.value.items.length === 0;
@@ -187,6 +249,7 @@ const isSaveButtonDisabled = computed(() => {
                                 v-model:name="item.name"
                                 v-model:qty="item.qty"
                                 v-model:discount="item.discount"
+                                v-model:fixedMrp="item.fixedMrp"
                                 :index="i"
                                 :products="products"
                                 @delete-item="
