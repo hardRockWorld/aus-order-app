@@ -1,118 +1,148 @@
 <template>
-  <div class="price-history">
-    <header class="ph-header">
-      <h1>Price Change History</h1>
+    <div class="price-history">
+        <header class="ph-header">
+            <h1>Price Change History</h1>
 
-      <div class="ph-controls">
-        <div class="filter-row">
-          <label>
-            Product
-            <select v-model="filters.productId">
-              <option value="">-- All products --</option>
-              <option v-for="p in products" :key="p.id" :value="p.id">
-                {{ p.slno }} - {{ p.name }}
-              </option>
-            </select>
-          </label>
+            <div class="ph-controls">
+                <div class="filter-row">
+                    <label>
+                        Product
+                        <select v-model="filters.productId">
+                            <option value="">-- All products --</option>
+                            <option
+                                v-for="p in products"
+                                :key="p.id"
+                                :value="p.id"
+                            >
+                                {{ p.slno }} - {{ p.name }}
+                            </option>
+                        </select>
+                    </label>
 
-          <label>
-            From
-            <input type="date" v-model="filters.from" />
-          </label>
+                    <label>
+                        From
+                        <input type="date" v-model="filters.from" />
+                    </label>
 
-          <label>
-            To
-            <input type="date" v-model="filters.to" />
-          </label>
+                    <label>
+                        To
+                        <input type="date" v-model="filters.to" />
+                    </label>
 
-          <label>
-            Changed By
-            <input type="text" v-model="filters.changedBy" placeholder="email or name" />
-          </label>
+                    <label>
+                        Changed By
+                        <input
+                            type="text"
+                            v-model="filters.changedBy"
+                            placeholder="email or name"
+                        />
+                    </label>
 
-          <button @click="applyFilters" class="btn">Apply</button>
-          <button @click="clearFilters" class="btn">Clear</button>
-        </div>
-      </div>
-    </header>
+                    <button @click="applyFilters" class="btn">Apply</button>
+                    <button @click="clearFilters" class="btn">Clear</button>
+                </div>
+            </div>
+        </header>
 
-    <section class="ph-stats">
-      <div class="stat">
-        <div class="value">{{ history.length }}</div>
-        <div class="label">Records</div>
-      </div>
-      <div class="stat">
-        <div class="value">{{ changesLast30Days }}</div>
-        <div class="label">Changes (last 30 days)</div>
-      </div>
-    </section>
+        <section class="ph-stats">
+            <div class="stat">
+                <div class="value">{{ history.length }}</div>
+                <div class="label">Records</div>
+            </div>
+            <div class="stat">
+                <div class="value">{{ changesLast30Days }}</div>
+                <div class="label">Changes (last 30 days)</div>
+            </div>
+        </section>
 
-    <section class="ph-table">
-      <table>
-        <thead>
-          <tr>
-            <th style="width:160px">Date</th>
-            <th style="width:90px">SLN</th>
-            <th>Product</th>
-            <th style="width:110px">Old</th>
-            <th style="width:110px">New</th>
-            <th style="width:220px">Changed By</th>
-            <th style="width:220px">Reason</th>
-          </tr>
-        </thead>
+        <section class="ph-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 160px">Date</th>
+                        <th style="width: 90px">SLN</th>
+                        <th>Product</th>
+                        <th style="width: 110px">Old</th>
+                        <th style="width: 110px">New</th>
+                        <th style="width: 220px">Changed By</th>
+                        <th style="width: 220px">Reason</th>
+                    </tr>
+                </thead>
 
-        <tbody>
-          <tr v-for="row in paginated" :key="row.id">
-            <td>{{ formatDate(row.createdAt) }}</td>
-            <td>{{ row.productId }}</td>
-            <td class="product-cell">
-              <div class="prod-name">{{ row.productName || '—' }}</div>
-            </td>
-            <td class="price-cell">{{ formatMoney(row.oldPrice) }}</td>
-            <td class="price-cell">{{ formatMoney(row.newPrice) }}</td>
-            <td>
-              <div>{{ row.changedBy?.name || row.changedBy?.email || 'Unknown' }}</div>
-              <div class="muted">{{ row.changedBy?.email }}</div>
-            </td>
-            <td class="reason-cell">{{ row.reason || '—' }}</td>
-          </tr>
+                <tbody>
+                    <tr v-for="row in paginated" :key="row.id">
+                        <td>{{ formatDate(row.createdAt) }}</td>
+                        <td>{{ row.productId }}</td>
+                        <td class="product-cell">
+                            <div class="prod-name">
+                                {{ row.productName || "—" }}
+                            </div>
+                        </td>
+                        <td class="price-cell">
+                            {{ formatMoney(row.oldPrice) }}
+                        </td>
+                        <td class="price-cell">
+                            {{ formatMoney(row.newPrice) }}
+                        </td>
+                        <td>
+                            <div>
+                                {{
+                                    row.changedBy?.name ||
+                                    row.changedBy?.email ||
+                                    "Unknown"
+                                }}
+                            </div>
+                            <div class="muted">{{ row.changedBy?.email }}</div>
+                        </td>
+                        <td class="reason-cell">{{ row.reason || "—" }}</td>
+                    </tr>
 
-          <tr v-if="!history.length">
-            <td colspan="7" class="empty">No history records found.</td>
-          </tr>
-        </tbody>
-      </table>
+                    <tr v-if="!history.length">
+                        <td colspan="7" class="empty">
+                            No history records found.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
 
-      <div class="pagination">
-        <div>
-          <label>
-            Per page:
-            <select v-model.number="perPage">
-              <option :value="10">10</option>
-              <option :value="25">25</option>
-              <option :value="50">50</option>
-              <option :value="100">100</option>
-            </select>
-          </label>
-        </div>
+            <div class="pagination">
+                <div>
+                    <label>
+                        Per page:
+                        <select v-model.number="perPage">
+                            <option :value="10">10</option>
+                            <option :value="25">25</option>
+                            <option :value="50">50</option>
+                            <option :value="100">100</option>
+                        </select>
+                    </label>
+                </div>
 
-        <div class="pager">
-          <button @click="prevPage" :disabled="page <= 1" class="btn">Prev</button>
-          <span>Page {{ page }} / {{ totalPages }}</span>
-          <button @click="nextPage" :disabled="page >= totalPages" class="btn">Next</button>
-        </div>
-      </div>
-    </section>
-  </div>
+                <div class="pager">
+                    <button @click="prevPage" :disabled="page <= 1" class="btn">
+                        Prev
+                    </button>
+                    <span>Page {{ page }} / {{ totalPages }}</span>
+                    <button
+                        @click="nextPage"
+                        :disabled="page >= totalPages"
+                        class="btn"
+                    >
+                        Next
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import {
-  fetchPriceHistory,
-  fetchChangesCountPerDay,
-  fetchProducts,
+    fetchPriceHistory,
+    fetchChangesCountPerDay,
+    fetchProducts,
 } from "@/db/priceService";
 
 // Local reactive state
@@ -125,10 +155,10 @@ const page = ref(1);
 const perPage = ref(25);
 
 const filters = reactive({
-  productId: route.query.productId || "",
-  from: route.query.from || "",
-  to: route.query.to || "",
-  changedBy: route.query.changedBy || "",
+    productId: route.query.productId || "",
+    from: route.query.from || "",
+    to: route.query.to || "",
+    changedBy: route.query.changedBy || "",
 });
 
 // statistics
@@ -136,222 +166,331 @@ const changesLast30Days = ref(0);
 
 // Fetch history from db using current filters
 async function loadHistory() {
-  loading.value = true;
-  try {
-    // pass productId if set
-    const opts = {
-      productId: filters.productId || null,
-      from: filters.from || null,
-      to: filters.to || null,
-      limit: 10000,
-    };
-    const rows = await fetchPriceHistory(opts);
-    // apply changedBy filter client-side (simple substring match)
-    let filtered = rows;
-    if (filters.changedBy && filters.changedBy.trim() !== "") {
-      const q = filters.changedBy.toLowerCase();
-      filtered = filtered.filter((r) => {
-        const by = (r.changedBy && (r.changedBy.email || r.changedBy.name)) || "";
-        return String(by).toLowerCase().includes(q);
-      });
+    loading.value = true;
+    try {
+        // pass productId if set
+        const opts = {
+            productId: filters.productId || null,
+            from: filters.from || null,
+            to: filters.to || null,
+            limit: 10000,
+        };
+        const rows = await fetchPriceHistory(opts);
+        // apply changedBy filter client-side (simple substring match)
+        let filtered = rows;
+        if (filters.changedBy && filters.changedBy.trim() !== "") {
+            const q = filters.changedBy.toLowerCase();
+            filtered = filtered.filter((r) => {
+                const by =
+                    (r.changedBy && (r.changedBy.email || r.changedBy.name)) ||
+                    "";
+                return String(by).toLowerCase().includes(q);
+            });
+        }
+        history.value = filtered;
+        page.value = 1;
+        await loadStats();
+    } catch (err) {
+        console.error("Failed to load price history", err);
+        history.value = [];
+    } finally {
+        loading.value = false;
     }
-    history.value = filtered;
-    page.value = 1;
-    await loadStats();
-  } catch (err) {
-    console.error("Failed to load price history", err);
-    history.value = [];
-  } finally {
-    loading.value = false;
-  }
 }
 
 async function loadProducts() {
-  try {
-    const list = await fetchProducts();
-    // normalize
-    products.value = list.map((p) => ({
-      id: p.id || String(p.slno),
-      slno: p.slno,
-      name: p.name,
-    }));
-  } catch (err) {
-    console.error("Failed to load products", err);
-    products.value = [];
-  }
+    try {
+        const list = await fetchProducts();
+        // normalize
+        products.value = list.map((p) => ({
+            id: p.id || String(p.slno),
+            slno: p.slno,
+            name: p.name,
+        }));
+    } catch (err) {
+        console.error("Failed to load products", err);
+        products.value = [];
+    }
 }
 
 async function loadStats() {
-  try {
-    const to = new Date();
-    const from = new Date();
-    from.setDate(to.getDate() - 30);
-    const arr = await fetchChangesCountPerDay({
-      from: from.toISOString(),
-      to: to.toISOString(),
-    });
-    changesLast30Days.value = arr.reduce((s, r) => s + (r.count || 0), 0);
-  } catch (e) {
-    changesLast30Days.value = 0;
-  }
+    try {
+        const to = new Date();
+        const from = new Date();
+        from.setDate(to.getDate() - 30);
+        const arr = await fetchChangesCountPerDay({
+            from: from.toISOString(),
+            to: to.toISOString(),
+        });
+        changesLast30Days.value = arr.reduce((s, r) => s + (r.count || 0), 0);
+    } catch (e) {
+        changesLast30Days.value = 0;
+    }
 }
 
 // Helpers
 function formatDate(ts) {
-  if (!ts) return "—";
-  // Firestore Timestamp may have toDate()
-  const d = ts.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleString();
+    if (!ts) return "—";
+    // Firestore Timestamp may have toDate()
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleString();
 }
 function formatMoney(v) {
-  if (v === null || v === undefined) return "—";
-  return Number(v).toFixed(2);
+    if (v === null || v === undefined) return "—";
+    return Number(v).toFixed(2);
 }
 
 // Pagination
 const totalPages = computed(() => {
-  return Math.max(1, Math.ceil(history.value.length / perPage.value || 1));
+    return Math.max(1, Math.ceil(history.value.length / perPage.value || 1));
 });
 const paginated = computed(() => {
-  const start = (page.value - 1) * perPage.value;
-  return history.value.slice(start, start + perPage.value);
+    const start = (page.value - 1) * perPage.value;
+    return history.value.slice(start, start + perPage.value);
 });
 function nextPage() {
-  if (page.value < totalPages.value) page.value += 1;
+    if (page.value < totalPages.value) page.value += 1;
 }
 function prevPage() {
-  if (page.value > 1) page.value -= 1;
+    if (page.value > 1) page.value -= 1;
 }
 
 function applyFilters() {
-  // normalize empty strings to nulls will be handled by loadHistory
-  loadHistory();
+    // normalize empty strings to nulls will be handled by loadHistory
+    loadHistory();
 }
 function clearFilters() {
-  filters.productId = "";
-  filters.from = "";
-  filters.to = "";
-  filters.changedBy = "";
-  loadHistory();
+    filters.productId = "";
+    filters.from = "";
+    filters.to = "";
+    filters.changedBy = "";
+    loadHistory();
 }
 
 // react to initial query params if present
 onMounted(async () => {
-  await loadProducts();
-  await loadHistory();
+    await loadProducts();
+    await loadHistory();
 });
 </script>
 
 <style scoped>
+/* Use theme variables so Price History follows the app's light/dark color scheme */
 .price-history {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 18px;
-  color: var(--text-color);
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 18px;
+    color: var(--text-color);
+    background-color: var(--background-color, var(--bg-color));
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease;
 }
 
 .ph-header {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 
 .ph-header h1 {
-  margin: 0;
-  font-size: 20px;
+    margin: 0;
+    font-size: 20px;
+    color: var(--text-color);
 }
 
 .ph-controls .filter-row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 .ph-controls label {
-  display: flex;
-  flex-direction: column;
-  font-size: 13px;
-  color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    font-size: 13px;
+    color: var(--text-color);
+}
+
+/* Dark-mode: ensure labels remain visible and high-contrast */
+[data-theme="dark"] .ph-controls label {
+    color: var(--text-color) !important;
 }
 
 .ph-controls input,
 .ph-controls select {
-  padding: 6px 8px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+    padding: 6px 8px;
+    border: 1px solid var(--border-light, #ddd);
+    border-radius: 6px;
+    background: var(--card-bg, var(--background-color, #fff));
+    color: var(--text-color);
+    /* Ensure text is visible across browsers and themes */
+    -webkit-text-fill-color: var(--text-color) !important;
+    caret-color: var(--text-color) !important;
+}
+
+/* Make placeholder text follow theme placeholder color and be visible */
+.ph-controls input::placeholder,
+.ph-controls select::placeholder {
+    color: var(--placeholder-color) !important;
+    opacity: 0.9;
 }
 
 .btn {
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: #f6f8f6;
-  border: 1px solid #e6e6e6;
-  cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--primary);
+    color: var(--primary-inverse, #fff);
+    border: none;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        transform 0.08s ease;
+}
+
+.btn:hover:not(:disabled) {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
 }
 
 .ph-stats {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 
 .stat {
-  padding: 10px;
-  border-radius: 8px;
-  background: var(--card-bg, #fff);
-  min-width: 140px;
-  text-align: center;
+    padding: 10px;
+    border-radius: 8px;
+    background: var(--card-bg, #fff);
+    min-width: 140px;
+    text-align: center;
+    box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.03));
+    /* Add subtle theme-aware border for visual separation like Dashboard */
+    border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+    color: var(--text-color);
 }
 
 .stat .value {
-  font-weight: 700;
-  font-size: 18px;
+    font-weight: 700;
+    font-size: 18px;
 }
 
 .ph-table {
-  border: 1px solid #ececec;
-  border-radius: 8px;
-  overflow: auto;
-  padding: 0;
+    border: 1px solid var(--border-light, #ececec);
+    border-radius: 8px;
+    overflow: auto;
+    padding: 0;
+    background: var(--card-bg, #fff);
 }
 
 .ph-table table {
-  width: 100%;
-  border-collapse: collapse;
+    width: 100%;
+    border-collapse: collapse;
 }
 
 .ph-table th,
 .ph-table td {
-  padding: 10px;
-  border-bottom: 1px solid #f3f3f3;
-  text-align: left;
-  vertical-align: middle;
+    padding: 10px;
+    border-bottom: 1px solid var(--border-light, #f3f3f3);
+    text-align: left;
+    vertical-align: middle;
+    color: var(--text-color);
+}
+
+.ph-table th {
+    background: var(--primary-focus, rgba(10, 61, 10, 0.08));
+    color: var(--primary);
+    font-weight: 700;
+}
+
+/* Dark-mode: make table headers clearly readable on dark surfaces */
+[data-theme="dark"] .ph-table th {
+    background: var(--card-bg, #2a2a2a) !important;
+    color: var(--text-color) !important;
+    font-weight: 700;
+    border-bottom-color: var(
+        --border-color,
+        rgba(255, 255, 255, 0.06)
+    ) !important;
 }
 
 .product-cell .prod-name {
-  max-width: 420px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
+    max-width: 420px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    color: var(--text-color);
 }
 
 .price-cell {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+    font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+    color: var(--text-color);
 }
 
 .empty {
-  padding: 16px;
-  text-align: center;
-  color: #666;
+    padding: 16px;
+    text-align: center;
+    color: var(--text-muted, #6c757d);
 }
 
 .pagination {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  gap: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    gap: 12px;
+    color: var(--text-color);
+}
+
+/* Make pagination controls accessible and visible in both themes */
+.pagination label {
+    color: var(--text-color);
+    font-size: 14px;
+    margin-right: 8px;
+}
+
+/* Style the select so option text is visible on dark surfaces */
+.pagination select {
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 6px 8px;
+    border-radius: 6px;
+    min-width: 72px;
+}
+
+/* Ensure options themselves are readable (many browsers inherit select color) */
+.pagination select option {
+    background: var(--card-bg);
+    color: var(--text-color);
+}
+
+/* Keep disabled selects visible (do not dim them too much) */
+.pagination select:disabled {
+    opacity: 1;
+    color: var(--text-muted);
+}
+
+/* Pager text should also be readable */
+.pagination .pager span {
+    color: var(--text-color);
+}
+
+/* Explicit dark-theme safeguards to override any browser UA styles */
+[data-theme="dark"] .pagination,
+[data-theme="dark"] .pagination label,
+[data-theme="dark"] .pagination select,
+[data-theme="dark"] .pagination select option,
+[data-theme="dark"] .pagination .pager span {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .pagination select {
+    background: var(--card-bg);
+    border-color: var(--border-color);
 }
 </style>

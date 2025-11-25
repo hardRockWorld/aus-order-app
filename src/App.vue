@@ -51,9 +51,12 @@ onMounted(() => {
             // Check admin status, set session store accordingly, and start realtime product updates.
             (async () => {
                 try {
-                    console.log('[Auth] onAuthStateChanged: user logged in', { uid: user.uid, email: user.email });
+                    console.log("[Auth] onAuthStateChanged: user logged in", {
+                        uid: user.uid,
+                        email: user.email,
+                    });
                     const admin = await isUserAdmin(user.uid);
-                    console.log('[Auth] isUserAdmin result:', admin);
+                    console.log("[Auth] isUserAdmin result:", admin);
                     // setUser supports an optional isAdmin flag (see session store)
                     sessionStore.setUser(
                         user,
@@ -63,12 +66,12 @@ onMounted(() => {
                         admin,
                     );
                     sessionStore.setIsAdmin(admin);
-                    console.log('[Session] setIsAdmin ->', admin);
+                    console.log("[Session] setIsAdmin ->", admin);
                     // After admin status is known, attempt a load again so admins can seed if DB is empty
                     try {
-                        console.log('[Products] Post-auth loadProducts start');
+                        console.log("[Products] Post-auth loadProducts start");
                         await productStore.loadProducts();
-                        console.log('[Products] Post-auth loadProducts done');
+                        console.log("[Products] Post-auth loadProducts done");
                     } catch (e) {
                         console.warn("Post-auth product load failed", e);
                     }
@@ -260,21 +263,21 @@ nav {
     text-decoration: none;
     font-weight: 700;
     font-size: 24px;
-    color: #072907;
+    color: var(--primary);
 }
 
 .logo-text {
-    color: #072907;
+    color: var(--primary);
 }
 
 .logo-text::first-letter {
     font-size: 130%;
-    color: #0a3d0a;
+    color: var(--accent-gold, #d4af37);
 }
 
 .welcome-message {
     font-size: 14px;
-    color: #495057;
+    color: var(--text-muted);
     /* Using regular text color */
     margin: 8px 0;
 }
@@ -307,11 +310,11 @@ nav {
 }
 
 .nav-item.logout {
-    color: #dc3545;
+    color: var(--danger);
 }
 
 .nav-item.logout:hover {
-    background-color: #fdedec;
+    background-color: var(--danger-bg);
 }
 
 .container {
@@ -334,7 +337,7 @@ nav {
 .app-footer {
     background-color: var(--background-color);
     padding: 16px 0;
-    border-top: 1px solid #dee2e6;
+    border-top: 1px solid var(--border-color, #dee2e6);
     margin-top: auto;
     color: var(--text-color);
 }
@@ -343,11 +346,11 @@ nav {
     max-width: 1200px;
     margin: 0 auto;
     text-align: center;
-    color: #6c757d;
+    color: var(--text-muted);
 }
 
 .footer-content a {
-    color: #3498db;
+    color: var(--link-color);
     text-decoration: none;
 }
 
@@ -367,12 +370,12 @@ nav {
     transition:
         background-color 0.2s,
         color 0.2s;
-    color: #0a3d0a;
+    color: var(--primary);
 }
 
 .dark-mode-toggle:hover {
-    background-color: rgba(10, 61, 10, 0.1);
-    color: #072907;
+    background-color: var(--primary-focus);
+    color: var(--primary-hover);
 }
 
 .dark-mode-toggle i {
@@ -381,43 +384,43 @@ nav {
 
 /* Dark mode text color overrides */
 [data-theme="dark"] .nav-item {
-    color: #ffffff !important;
+    color: var(--text-color) !important;
 }
 
 [data-theme="dark"] .nav-item:hover {
-    background-color: #2a2a2a;
-    color: #d4af37 !important;
+    background-color: var(--card-bg);
+    color: var(--accent-gold, #d4af37) !important;
 }
 
 [data-theme="dark"] .nav-item.logout {
-    color: #ff6b6b !important;
+    color: var(--danger) !important;
 }
 
 [data-theme="dark"] .nav-item.logout:hover {
-    background-color: #2a2a2a;
-    color: #ff4444 !important;
+    background-color: var(--card-bg);
+    color: var(--danger) !important;
 }
 
 [data-theme="dark"] .logo-link,
 [data-theme="dark"] .logo-text {
-    color: #ffffff !important;
+    color: var(--text-color) !important;
 }
 
 [data-theme="dark"] .logo-text::first-letter {
-    color: #d4af37 !important;
+    color: var(--accent-gold, #d4af37) !important;
 }
 
 [data-theme="dark"] .welcome-message,
 [data-theme="dark"] .welcome-message strong {
-    color: #ffffff !important;
+    color: var(--text-color) !important;
 }
 
 [data-theme="dark"] .footer-content {
-    color: #888888;
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .footer-content a {
-    color: #4caf50;
+    color: var(--link-color);
 }
 
 [data-theme="dark"] .footer-content a:hover {

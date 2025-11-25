@@ -1,83 +1,104 @@
 /* Base transitions for theme changes */
-html, body, .app-container, * {
-  transition:
-    background-color 0.3s ease,
-    color 0.3s ease,
-    border-color 0.3s ease;
+html,
+body,
+.app-container,
+* {
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease,
+        border-color 0.3s ease;
 }
 
 /* Global styles */
 :root,
 [data-theme="light"] {
-  --primary: #0a3d0a;
-  --primary-hover: #072907;
-  --primary-focus: rgba(10, 61, 10, 0.125);
-  --primary-inverse: #ffffff;
-  --background-color: #f5f5f5;
-  --placeholder-color: #0a3d0a;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
-  --border-light: 1px solid rgba(255, 255, 255, 0.5);
-  --radius-sm: 4px;
-  --transition-fast: 0.2s ease-in-out;
-  --text-color: #000000;
-  --text-muted: #6c757d;
-  --text-dark: #333;
-  --success: green;
-  --danger: red;
+    --primary: #0a3d0a;
+    --primary-hover: #072907;
+    --primary-focus: rgba(10, 61, 10, 0.125);
+    --primary-inverse: #ffffff;
+    --background-color: #f5f5f5;
+    --bg-color: #f5f5f5;
+    --card-bg: #ffffff;
+    --card-surface: #f7f7f7;
+    --placeholder-color: #0a3d0a;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+    --border-light: rgba(0, 0, 0, 0.08);
+    --border-color: rgba(0, 0, 0, 0.12);
+    --radius-sm: 4px;
+    --transition-fast: 0.2s ease-in-out;
+    --text-color: #000000;
+    --text-muted: #6c757d;
+    --text-dark: #333;
+    --success: green;
+    --danger: red;
+
+    /* Accent and semantic colors for consistent themed surfaces */
+    --accent: #d4af37; /* gold accent used across headings/first-letter */
+    --accent-contrast: #121212; /* text color used on accent backgrounds */
+    --muted-accent: rgba(212, 175, 55, 0.18); /* subtle accent surface */
+    --warning-bg: #fff6f6; /* light-mode warning background (admin banner) */
+    --warning-border: #ffdddd; /* light-mode warning border */
+    --warning-text: #7a1a1a; /* warning text color for light mode */
+    --info-bg: #eef7ef; /* subtle info/card surface in light mode */
+    --muted-surface: #f3f4f6; /* slightly muted card surface */
 }
 
 [data-theme="dark"] {
-  --placeholder-color: #fff;
-  --primary: #0a3d0a;
-  --primary-hover: #072907;
-  --primary-focus: rgba(10, 61, 10, 0.125);
-  --primary-inverse: #121212;
-  --background-color: #121212;
-  --text-color: #ffffff;
+    --placeholder-color: #fff;
+    --primary: #0a3d0a;
+    --primary-hover: #072907;
+    --primary-focus: rgba(10, 61, 10, 0.125);
+    --primary-inverse: #121212;
+    --background-color: #121212;
+    --text-color: #ffffff;
 }
 
 body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
+    background-color: var(--bg-color);
+    color: var(--text-color);
 }
 
 /* Placeholder styles for all browsers */
 ::-webkit-input-placeholder {
-  /* Chrome/Safari/Opera */
-  color: var(--placeholder-color) !important;
-  opacity: 0.7;
+    /* Chrome/Safari/Opera */
+    color: var(--placeholder-color) !important;
+    opacity: 0.7;
 }
 
 ::-moz-placeholder {
-  /* Firefox 19+ */
-  color: var(--placeholder-color) !important;
-  opacity: 0.7;
+    /* Firefox 19+ */
+    color: var(--placeholder-color) !important;
+    opacity: 0.7;
 }
 
 :-ms-input-placeholder {
-  /* IE 10+ */
-  color: var(--placeholder-color) !important;
-  opacity: 0.7;
+    /* IE 10+ */
+    color: var(--placeholder-color) !important;
+    opacity: 0.7;
 }
 
 :-moz-placeholder {
-  /* Firefox 18- */
-  color: var(--placeholder-color) !important;
-  opacity: 0.7;
+    /* Firefox 18- */
+    color: var(--placeholder-color) !important;
+    opacity: 0.7;
 }
 
 ::placeholder {
-  color: var(--placeholder-color) !important;
-  opacity: 0.7;
+    color: var(--placeholder-color) !important;
+    opacity: 0.7;
 }
 
 /* Apply theme colors */
 /* Ensure all interactive elements transition smoothly */
-button, a, input, select, textarea {
-  transition:
-          background-color 0.3s ease,
-          color 0.3s ease,
-          border-color 0.3s ease;
+button,
+a,
+input,
+select,
+textarea {
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease,
+        border-color 0.3s ease;
 }
 
 .notification {
@@ -91,15 +112,14 @@ button, a, input, select, textarea {
     border: solid 1px red;
 }
 
-
 /* Lime Light scheme (Default) */
 /* Can be forced with data-theme="light" */
 [data-theme="light"],
 :root:not([data-theme="dark"]) {
-  --primary: #0a3d0a;
-  --primary-hover: #072907;
-  --primary-focus: rgba(10, 61, 10, 0.125);
-  --primary-inverse: #ffffff;
+    --primary: #0a3d0a;
+    --primary-hover: #072907;
+    --primary-focus: rgba(10, 61, 10, 0.125);
+    --primary-inverse: #ffffff;
 }
 
 /* Lime Dark scheme (Auto) */
@@ -115,26 +135,35 @@ button, a, input, select, textarea {
 
 /* Light theme (default) */
 :root {
-  --primary: #0a3d0a;
-  --primary-hover: #072907;
-  --primary-focus: rgba(10, 61, 10, 0.125);
-  --primary-inverse: #ffffff;
-  --bg-color: #f5f5f5;
-  --text-color: #000;
-  --placeholder-color: #0a3d0a;
+    --primary: #0a3d0a;
+    --primary-hover: #072907;
+    --primary-focus: rgba(10, 61, 10, 0.125);
+    --primary-inverse: #ffffff;
+    --bg-color: #f5f5f5;
+    --background-color: #f5f5f5;
+    --card-bg: #ffffff;
+    --card-surface: #f7f7f7;
+    --border-light: rgba(0, 0, 0, 0.06);
+    --border-color: rgba(0, 0, 0, 0.12);
+    --text-color: #000;
+    --placeholder-color: #0a3d0a;
 }
 
 /* Dark theme */
 [data-theme="dark"] {
-  --primary: #c0ca33;
-  --primary-hover: #cddc39;
-  --primary-focus: rgba(192, 202, 51, 0.25);
-  --primary-inverse: rgba(0, 0, 0, 0.75);
-  --bg-color: #121212;
-  --text-color: #fff;
-  --placeholder-color: #fff;
+    --primary: #c0ca33;
+    --primary-hover: #cddc39;
+    --primary-focus: rgba(192, 202, 51, 0.25);
+    --primary-inverse: rgba(0, 0, 0, 0.75);
+    --bg-color: #121212;
+    --background-color: #121212;
+    --card-bg: #1e1e1e;
+    --card-surface: #1a1a1a;
+    --border-light: rgba(255, 255, 255, 0.06);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --text-color: #ffffff;
+    --placeholder-color: #fff;
 }
-
 
 /* Lime Dark scheme (Forced) */
 /* Enabled if forced with data-theme="dark" */
@@ -147,78 +176,93 @@ button, a, input, select, textarea {
 
 /* Lime (Common styles) */
 :root {
-  --form-element-active-border-color: var(--primary);
-  --form-element-focus-color: var(--primary-focus);
-  --switch-color: var(--primary-inverse);
-  --switch-checked-background-color: var(--primary);
+    --form-element-active-border-color: var(--primary);
+    --form-element-focus-color: var(--primary-focus);
+    --switch-color: var(--primary-inverse);
+    --switch-checked-background-color: var(--primary);
 }
 
 /* Common Text Styles */
-h1, h2, h3, h4, h5, h6 {
-  color: #072907;  /* Very dark green for headings */
-  font-weight: 700;
-  letter-spacing: -0.5px;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: #072907; /* Very dark green for headings */
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
-.form-label, label {
-  color: #0a3d0a;  /* Dark green for form labels */
-  font-weight: 600;
+.form-label,
+label {
+    color: #0a3d0a; /* Dark green for form labels */
+    font-weight: 600;
 }
 
 table th {
-  color: #0a3d0a !important;  /* Dark green for table headers */
-  font-weight: 700;
+    color: #0a3d0a !important; /* Dark green for table headers */
+    font-weight: 700;
 }
 
-input, select, textarea {
-  color: #072907 !important;  /* Very dark green for input text */
-  font-weight: 500;
+input,
+select,
+textarea {
+    color: #072907 !important; /* Very dark green for input text */
+    font-weight: 500;
 }
 
 /* Button text styles */
-button, .button {
-  color: #ffffff;
-  font-weight: 600;
+button,
+.button {
+    color: #ffffff;
+    font-weight: 600;
 }
 
 /* Link styles */
 a {
-  color: #0a3d0a;
-  font-weight: 500;
+    color: #0a3d0a;
+    font-weight: 500;
 }
 
 a:hover {
-  color: #072907;
+    color: #072907;
 }
 
 /* Table cell text */
 table td {
-  color: #072907;  /* Very dark green for table content */
+    color: var(--text-color);
 }
 
 /* Form heading styles */
-.form-title, .section-title {
-  color: #072907;
-  font-weight: 700;
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  letter-spacing: -0.5px;
+.form-title,
+.section-title {
+    color: #072907;
+    font-weight: 700;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    letter-spacing: -0.5px;
 }
 
 /* Form group labels */
 .form-group label {
-  color: #0a3d0a;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+    color: #0a3d0a;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
 }
 
 /* Placeholder text color */
 ::placeholder {
-  color: rgba(7, 41, 7, 0.5) !important;
+    color: rgba(7, 41, 7, 0.5) !important;
 }
 
-h1::first-letter,h2::first-letter,h3::first-letter,h4::first-letter,h5::first-letter,h6::first-letter {
-    color: #d4af37;  /* Gold color to complement dark green */
+h1::first-letter,
+h2::first-letter,
+h3::first-letter,
+h4::first-letter,
+h5::first-letter,
+h6::first-letter {
+    color: #d4af37; /* Gold color to complement dark green */
     font-weight: 800;
     font-size: 150%;
     text-shadow: 1px 1px 1px rgba(10, 61, 10, 0.1);
@@ -228,53 +272,58 @@ h1::first-letter,h2::first-letter,h3::first-letter,h4::first-letter,h5::first-le
     font-weight: bolder;
 } */
 label::first-letter {
-    color: #d4af37;  /* Gold color to complement dark green */
+    color: #d4af37; /* Gold color to complement dark green */
     font-weight: 700;
 }
 table thead tr th::first-letter {
-    color: #d4af37;  /* Gold color to complement dark green */
+    color: #d4af37; /* Gold color to complement dark green */
     font-weight: 700;
 }
 
 /* Button styles */
-button, .button {
-  background-color: var(--primary) !important;
-  color: #ffffff !important;
-  border: none !important;
-  transition: all 0.3s ease;
-  font-weight: 600;
+button,
+.button {
+    background-color: var(--primary) !important;
+    color: #ffffff !important;
+    border: none !important;
+    transition: all 0.3s ease;
+    font-weight: 600;
 }
 
-button:hover:not(:disabled), .button:hover:not(:disabled) {
-  background-color: var(--primary-hover) !important;
-  transform: translateY(-2px);
+button:hover:not(:disabled),
+.button:hover:not(:disabled) {
+    background-color: var(--primary-hover) !important;
+    transform: translateY(-2px);
 }
 
-button:active:not(:disabled), .button:active:not(:disabled) {
-  transform: translateY(1px);
+button:active:not(:disabled),
+.button:active:not(:disabled) {
+    transform: translateY(1px);
 }
 
-button:disabled, .button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+button:disabled,
+.button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 /* Secondary button style */
-button.secondary, .button.secondary {
-  background-color: transparent !important;
-  border: 1px solid var(--primary) !important;
-  color: var(--primary) !important;
+button.secondary,
+.button.secondary {
+    background-color: transparent !important;
+    border: 1px solid var(--primary) !important;
+    color: var(--primary) !important;
 }
 
 /* Add explicit rules for app-container and container */
 [data-theme="dark"] .app-container,
 [data-theme="dark"] .container {
-  background-color: #121212 !important;
-  color: #ffffff !important;
+    background-color: #121212 !important;
+    color: #ffffff !important;
 }
 
 [data-theme="light"] .app-container,
 [data-theme="light"] .container {
-  background-color: #f5f5f5 !important;
-  color: #000000 !important;
+    background-color: #f5f5f5 !important;
+    color: #000000 !important;
 }
