@@ -32,7 +32,8 @@ service cloud.firestore {
       // Allow reads for everyone so the app can load products without special rights
       // Use `read` to cover both `get` and `list` (query).
       // Change to `isSignedIn()` if you want to restrict to authenticated users only.
-      allow read: if true;
+      // allow get, list: isSignedIn();
+      allow read: isSignedIn();
       // Writes restricted to admins
       allow create, update, delete: if isAdmin();
     }
